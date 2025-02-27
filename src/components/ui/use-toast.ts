@@ -76,12 +76,12 @@ const reducer = (state: State, action: Action): State => {
       // ! Side effects ! - This could be extracted into a dismissToast() action,
       // but I'll keep it here for simplicity
       if (toastId) {
-        if (toastTimeouts.has(toastId)) {
-          clearTimeout(toastTimeouts.get(toastId))
-          toastTimeouts.delete(toastId)
-        }
+        // eslint-disable-next-line no-unused-expressions
+        toastTimeouts.get(toastId)
+        toastTimeouts.delete(toastId)
       } else {
-        for (const [id, timeout] of toastTimeouts.entries()) {
+        // eslint-disable-next-line no-unused-expressions
+        for (const [id, timeout] of Array.from(toastTimeouts.entries())) {
           clearTimeout(timeout)
           toastTimeouts.delete(id)
         }

@@ -34,6 +34,7 @@ interface FinalPromptContextType {
   promptVersions: PromptVersion[];
   activePromptId: string | null;
   fullPromptWithContext: string;
+  isLoading: boolean;
 }
 
 const FinalPromptContext = createContext<FinalPromptContextType | undefined>(undefined);
@@ -43,8 +44,35 @@ export function FinalPromptProvider({ children }: { children: ReactNode }) {
   const [finalPrompt, setFinalPrompt] = useState<string>(defaultPrompt);
   const [promptVersions, setPromptVersions] = useState<PromptVersion[]>([]);
   const [activePromptId, setActivePromptId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const { knowledgeBase } = useKnowledgeBase();
   const [fullPromptWithContext, setFullPromptWithContext] = useState<string>(defaultPrompt);
+
+  // Load saved prompts on initial mount
+  useEffect(() => {
+    const loadSavedPrompts = async () => {
+      try {
+        const response = await fetch('/api/prompts');
+        if (response.ok) {
+          const data = await response.json();
+          setPromptVersions(data.versions || []);
+          
+          // Load the most recent prompt if available
+          if (data.versions && data.versions.length > 0) {
+            const mostRecent = data.versions[0]; // Assuming sorted by timestamp desc
+            setFinalPrompt(mostRecent.prompt);
+            setActivePromptId(mostRecent.id);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load saved prompts:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadSavedPrompts();
+  }, []);
 
   // Update the full prompt with context whenever the base prompt or knowledge base changes
   useEffect(() => {
@@ -64,6 +92,7 @@ export function FinalPromptProvider({ children }: { children: ReactNode }) {
    - Historical Performance: ${knowledgeBase.danaPlus.historicalPerformance}
 
 2. Reksa Dana (Mutual Funds):
+   - Description: ${knowledgeBase.reksadana.description}
    - Features: ${knowledgeBase.reksadana.features}
    - Benefits: ${knowledgeBase.reksadana.benefits}
    - Target Audience: ${knowledgeBase.reksadana.targetAudience}
@@ -98,14 +127,33 @@ export function FinalPromptProvider({ children }: { children: ReactNode }) {
     setFullPromptWithContext(updatedPrompt);
   }, [finalPrompt, knowledgeBase]);
 
-  const savePromptVersion = () => {
+  const savePromptVersion = async () => {
     const newVersion: PromptVersion = {
       id: Date.now().toString(),
       prompt: finalPrompt,
       timestamp: new Date()
     };
-    setPromptVersions(prev => [newVersion, ...prev]);
-    setActivePromptId(newVersion.id);
+    
+    try {
+      // Save to server
+      const response = await fetch('/api/prompts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ version: newVersion }),
+      });
+      
+      if (response.ok) {
+        // Update local state
+        setPromptVersions(prev => [newVersion, ...prev]);
+        setActivePromptId(newVersion.id);
+      } else {
+        console.error('Failed to save prompt version');
+      }
+    } catch (error) {
+      console.error('Error saving prompt version:', error);
+    }
   };
 
   const loadPromptVersion = (id: string) => {
@@ -124,7 +172,8 @@ export function FinalPromptProvider({ children }: { children: ReactNode }) {
       loadPromptVersion, 
       promptVersions, 
       activePromptId,
-      fullPromptWithContext
+      fullPromptWithContext,
+      isLoading
     }}>
       {children}
     </FinalPromptContext.Provider>

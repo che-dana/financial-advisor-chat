@@ -72,6 +72,7 @@ interface KnowledgeBaseContextType {
   knowledgeBase: KnowledgeBase;
   updateProductInfo: (product: keyof KnowledgeBase, info: Partial<ProductInfo>) => void;
   resetKnowledgeBase: () => void;
+  refreshKnowledgeBase: () => void;
 }
 
 const KnowledgeBaseContext = createContext<KnowledgeBaseContextType | undefined>(undefined);
@@ -94,8 +95,21 @@ export function KnowledgeBaseProvider({ children }: { children: ReactNode }) {
     setKnowledgeBase(defaultKnowledgeBase);
   };
 
+  const refreshKnowledgeBase = async () => {
+    // Fetch the latest knowledge base data from storage
+    const storedData = localStorage.getItem('knowledgeBase');
+    if (storedData) {
+      try {
+        const parsedData = JSON.parse(storedData);
+        setKnowledgeBase(parsedData);
+      } catch (error) {
+        console.error('Error parsing knowledge base data:', error);
+      }
+    }
+  };
+
   return (
-    <KnowledgeBaseContext.Provider value={{ knowledgeBase, updateProductInfo, resetKnowledgeBase }}>
+    <KnowledgeBaseContext.Provider value={{ knowledgeBase, updateProductInfo, resetKnowledgeBase, refreshKnowledgeBase }}>
       {children}
     </KnowledgeBaseContext.Provider>
   );

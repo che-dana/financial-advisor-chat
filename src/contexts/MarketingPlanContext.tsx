@@ -1,6 +1,6 @@
 "use client"
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { UserProfile } from './UserProfileContext';
 
 // Define the marketing plan type
@@ -14,13 +14,25 @@ export interface MarketingPlan {
   userProfile: Partial<UserProfile>; // Store the user profile at the time of generation
 }
 
+type SelectedComponents = {
+  bestProducts: boolean;
+  marketingTechnique: boolean;
+  conversationStarter: boolean;
+  conversationSequence: boolean;
+};
+
 // Create context
 interface MarketingPlanContextType {
   marketingPlans: MarketingPlan[];
   currentPrompt: string;
+  selectedComponents: SelectedComponents;
   setCurrentPrompt: (prompt: string) => void;
-  addMarketingPlan: (plan: Omit<MarketingPlan, 'id' | 'timestamp' | 'userProfile'>) => void;
+  addMarketingPlan: (plan: MarketingPlan) => void;
+  toggleComponentSelection: (component: keyof SelectedComponents) => void;
+  getSelectedComponentsText: () => string;
   clearMarketingPlans: () => void;
+  isLoading: boolean;
+  setAllComponentsSelection: (selected: boolean) => void;
 }
 
 const defaultPrompt = `You are a marketing strategist designing a personalized investment marketing plan for Dana's investment products: **Dana+ (High-interest savings), Emas (Gold investment), and Reksa Dana (Mutual funds).**  
@@ -83,35 +95,167 @@ Please provide your response in JSON format with the following structure:
   "conversationSequence": ["step 1", "step 2", "step 3", "step 4"]
 }`;
 
-const MarketingPlanContext = createContext<MarketingPlanContextType | undefined>(undefined);
+const defaultContext: MarketingPlanContextType = {
+  marketingPlans: [],
+  currentPrompt: defaultPrompt,
+  selectedComponents: {
+    bestProducts: false,
+    marketingTechnique: false,
+    conversationStarter: false,
+    conversationSequence: false
+  },
+  setCurrentPrompt: () => {},
+  addMarketingPlan: () => {},
+  toggleComponentSelection: () => {},
+  getSelectedComponentsText: () => '',
+  clearMarketingPlans: () => {},
+  isLoading: true,
+  setAllComponentsSelection: () => {}
+};
+
+const MarketingPlanContext = createContext<MarketingPlanContextType>(defaultContext);
 
 // Provider component
 export function MarketingPlanProvider({ children }: { children: ReactNode }) {
   const [marketingPlans, setMarketingPlans] = useState<MarketingPlan[]>([]);
   const [currentPrompt, setCurrentPrompt] = useState<string>(defaultPrompt);
+  const [selectedComponents, setSelectedComponents] = useState<SelectedComponents>({
+    bestProducts: false,
+    marketingTechnique: false,
+    conversationStarter: false,
+    conversationSequence: false
+  });
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const addMarketingPlan = (plan: Omit<MarketingPlan, 'id' | 'timestamp' | 'userProfile'>) => {
-    const newPlan: MarketingPlan = {
-      ...plan,
-      id: Date.now().toString(),
-      timestamp: new Date(),
-      userProfile: {} // In a real app, you'd capture the current user profile
+  // Load saved marketing plans and prompt on initial mount
+  useEffect(() => {
+    const loadSavedData = async () => {
+      try {
+        // Load marketing plans
+        const plansResponse = await fetch('/api/marketing-plans');
+        if (plansResponse.ok) {
+          const plansData = await plansResponse.json();
+          setMarketingPlans(plansData.plans || []);
+        }
+        
+        // Load marketing prompt
+        const promptResponse = await fetch('/api/marketing-prompt');
+        if (promptResponse.ok) {
+          const promptData = await promptResponse.json();
+          if (promptData.prompt) {
+            setCurrentPrompt(promptData.prompt);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load saved marketing data:', error);
+      } finally {
+        setIsLoading(false);
+      }
     };
-    setMarketingPlans(prev => [newPlan, ...prev]);
+
+    loadSavedData();
+  }, []);
+
+  // Save the current prompt whenever it changes
+  useEffect(() => {
+    const savePrompt = async () => {
+      if (isLoading) return; // Don't save during initial load
+      
+      try {
+        await fetch('/api/marketing-prompt', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ prompt: currentPrompt }),
+        });
+      } catch (error) {
+        console.error('Failed to save marketing prompt:', error);
+      }
+    };
+
+    savePrompt();
+  }, [currentPrompt, isLoading]);
+
+  const addMarketingPlan = (plan: MarketingPlan) => {
+    setMarketingPlans([plan, ...marketingPlans]);
   };
 
-  const clearMarketingPlans = () => {
-    setMarketingPlans([]);
+  const toggleComponentSelection = (component: keyof SelectedComponents) => {
+    setSelectedComponents(prev => ({
+      ...prev,
+      [component]: !prev[component]
+    }));
+  };
+
+  // Function to get text of selected components for the final prompt
+  const getSelectedComponentsText = () => {
+    if (marketingPlans.length === 0) return '';
+    
+    const plan = marketingPlans[0];
+    let selectedText = '';
+    
+    if (selectedComponents.bestProducts && plan.bestProducts) {
+      selectedText += `Best Products:\n- ${plan.bestProducts.join('\n- ')}\n\n`;
+    }
+    
+    if (selectedComponents.marketingTechnique && plan.marketingTechnique) {
+      selectedText += `Marketing Technique:\n${plan.marketingTechnique}\n\n`;
+    }
+    
+    if (selectedComponents.conversationStarter && plan.conversationStarter) {
+      selectedText += `Conversation Starter:\n"${plan.conversationStarter}"\n\n`;
+    }
+    
+    if (selectedComponents.conversationSequence && plan.conversationSequence) {
+      selectedText += `Conversation Sequence:\n${plan.conversationSequence.map((step, i) => `${i+1}. ${step}`).join('\n')}\n`;
+    }
+    
+    return selectedText;
+  };
+
+  const clearMarketingPlans = async () => {
+    try {
+      // Clear on server
+      const response = await fetch('/api/marketing-plans', {
+        method: 'DELETE',
+      });
+      
+      if (response.ok) {
+        // Update local state
+        setMarketingPlans([]);
+      } else {
+        console.error('Failed to clear marketing plans');
+      }
+    } catch (error) {
+      console.error('Error clearing marketing plans:', error);
+    }
+  };
+
+  const setAllComponentsSelection = (selected: boolean) => {
+    setSelectedComponents({
+      bestProducts: selected,
+      marketingTechnique: selected,
+      conversationStarter: selected,
+      conversationSequence: selected
+    });
   };
 
   return (
-    <MarketingPlanContext.Provider value={{ 
-      marketingPlans, 
-      currentPrompt, 
-      setCurrentPrompt, 
-      addMarketingPlan, 
-      clearMarketingPlans 
-    }}>
+    <MarketingPlanContext.Provider 
+      value={{ 
+        marketingPlans, 
+        currentPrompt, 
+        selectedComponents,
+        setCurrentPrompt, 
+        addMarketingPlan,
+        toggleComponentSelection,
+        getSelectedComponentsText,
+        clearMarketingPlans,
+        isLoading,
+        setAllComponentsSelection
+      }}
+    >
       {children}
     </MarketingPlanContext.Provider>
   );

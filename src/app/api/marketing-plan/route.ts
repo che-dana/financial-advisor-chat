@@ -50,9 +50,8 @@ User Profile:
    - Minimum Investment: ${knowledgeBase.danaPlus.minimumInvestment}
    - Return Rate: ${knowledgeBase.danaPlus.returnRate}
    - Additional Info: ${knowledgeBase.danaPlus.additionalInfo}
-   - Historical Performance: ${knowledgeBase.danaPlus.historicalPerformance}
 
-2. Reksa Dana (Mutual Funds):
+2. Reksa Dana (Mutual funds):
    - Description: ${knowledgeBase.reksadana.description}
    - Features: ${knowledgeBase.reksadana.features}
    - Benefits: ${knowledgeBase.reksadana.benefits}
@@ -61,9 +60,8 @@ User Profile:
    - Minimum Investment: ${knowledgeBase.reksadana.minimumInvestment}
    - Return Rate: ${knowledgeBase.reksadana.returnRate}
    - Additional Info: ${knowledgeBase.reksadana.additionalInfo}
-   - Historical Performance: ${knowledgeBase.reksadana.historicalPerformance}
 
-3. eMAS (Gold Investment):
+3. eMAS (Gold investment):
    - Description: ${knowledgeBase.eMAS.description}
    - Features: ${knowledgeBase.eMAS.features}
    - Benefits: ${knowledgeBase.eMAS.benefits}
@@ -72,17 +70,10 @@ User Profile:
    - Minimum Investment: ${knowledgeBase.eMAS.minimumInvestment}
    - Return Rate: ${knowledgeBase.eMAS.returnRate}
    - Additional Info: ${knowledgeBase.eMAS.additionalInfo}
-   - Historical Performance: ${knowledgeBase.eMAS.historicalPerformance}
 `;
 
-    // Construct the full prompt with context
-    const fullPrompt = `
-${prompt}
-
-${userProfileFormatted}
-
-${knowledgeBaseFormatted}
-`;
+    // Combine the base prompt with user profile and knowledge base
+    const completePrompt = `${prompt}\n\n${userProfileFormatted}\n\n${knowledgeBaseFormatted}`;
 
     // Call Azure OpenAI API
     const response = await fetch(`${azureConfig.apiBase}/openai/deployments/${azureConfig.deploymentName}/chat/completions?api-version=${azureConfig.apiVersion}`, {
@@ -93,33 +84,171 @@ ${knowledgeBaseFormatted}
       },
       body: JSON.stringify({
         messages: [
-          { role: "system", content: "You are a financial marketing expert. Generate marketing plans based on user profiles and product information." },
-          { role: "user", content: fullPrompt }
+          { role: "system", content: completePrompt },
+          { role: "user", content: "Generate a marketing plan for this user." }
         ],
         temperature: 0.7,
-        max_tokens: 1000
+        max_tokens: 1000,
+        response_format: { type: "json_object" }
       })
     });
 
     if (!response.ok) {
       const errorData = await response.json();
       console.error('Azure OpenAI API error:', errorData);
-      return NextResponse.json({ error: 'Failed to get marketing plan' }, { status: 500 });
+      return NextResponse.json({ error: 'Failed to generate marketing plan' }, { status: 500 });
     }
 
     const data = await response.json();
     const aiResponse = data.choices[0].message.content;
     
+    console.log("AI Response:", aiResponse);
+    
+    // Parse the response to extract the marketing plan components
+    let bestProducts: string[] = [];
+    let marketingTechnique = '';
+    let conversationStarter = '';
+    let conversationSequence: string[] = [];
+    
     try {
-      // Parse the JSON response
-      const plan = JSON.parse(aiResponse);
-      return NextResponse.json({ plan });
-    } catch (parseError) {
-      console.error('Error parsing AI response:', parseError);
-      return NextResponse.json({ error: 'Failed to parse marketing plan' }, { status: 500 });
+      // Try to parse as JSON first
+      const jsonResponse = JSON.parse(aiResponse);
+      
+      // Extract best products
+      if (jsonResponse.bestProducts) {
+        if (Array.isArray(jsonResponse.bestProducts)) {
+          bestProducts = jsonResponse.bestProducts;
+        } else if (typeof jsonResponse.bestProducts === 'string') {
+          // Split by bullet points or commas if present
+          if (jsonResponse.bestProducts.includes('-') || jsonResponse.bestProducts.includes('•')) {
+            bestProducts = jsonResponse.bestProducts.split(/[-•]/).map((p: string) => p.trim()).filter((p: string) => p);
+          } else if (jsonResponse.bestProducts.includes(',')) {
+            bestProducts = jsonResponse.bestProducts.split(',').map((p: string) => p.trim()).filter((p: string) => p);
+          } else {
+            bestProducts = [jsonResponse.bestProducts];
+          }
+        }
+      }
+      
+      // Extract marketing technique
+      if (jsonResponse.marketingTechnique) {
+        marketingTechnique = jsonResponse.marketingTechnique;
+      }
+      
+      // Extract conversation starter
+      if (jsonResponse.conversationStarter) {
+        conversationStarter = jsonResponse.conversationStarter;
+      }
+      
+      // Extract conversation sequence
+      if (jsonResponse.conversationSequence) {
+        if (Array.isArray(jsonResponse.conversationSequence)) {
+          conversationSequence = jsonResponse.conversationSequence;
+        } else if (typeof jsonResponse.conversationSequence === 'string') {
+          const conversationSequenceText = jsonResponse.conversationSequence;
+          
+          // Try to parse as a numbered list first
+          const numberedSteps = conversationSequenceText.match(/\d+\.\s*(.*?)(?=\n\d+\.|\n*$)/gs);
+          if (numberedSteps) {
+            conversationSequence = numberedSteps.map((step: string) => {
+              return step.replace(/^\d+\.\s*/, '').trim();
+            });
+          } 
+          // Otherwise, try to split by lines that might be steps
+          else {
+            const lines = conversationSequenceText.split('\n')
+              .map((line: string) => line.trim())
+              .filter((line: string) => line && !line.match(/^Conversation Sequence:?$/i));
+            
+            // Look for lines that might be steps
+            for (const line of lines) {
+              if (line.match(/^[a-z0-9]\)/) || line.match(/^step \d+/i) || line.match(/^[•\-]/) || line.match(/^\d+\./)) {
+                conversationSequence.push(line.replace(/^[a-z0-9]\)|\s*[•\-]\s*|^step \d+:\s*|^\d+\.\s*/i, '').trim());
+              } else {
+                // If it doesn't look like a step, just add it
+                conversationSequence.push(line);
+              }
+            }
+          }
+        } else if (typeof jsonResponse.conversationSequence === 'object') {
+          // Handle case where sequence is an object with step keys
+          const steps = Object.values(jsonResponse.conversationSequence);
+          conversationSequence = steps.map((step: any) => step.toString());
+        }
+      }
+    } catch (error) {
+      console.error('Error parsing JSON response:', error);
+      
+      // Fallback to regex parsing if JSON parsing fails
+      // Extract best products
+      const productMatch = aiResponse.match(/Best Products:?\s*([\s\S]*?)(?=Marketing Technique:|$)/i);
+      if (productMatch && productMatch[1]) {
+        const productText = productMatch[1].trim();
+        // Split by bullet points or commas if present
+        if (productText.includes('-') || productText.includes('•')) {
+          bestProducts = productText.split(/[-•]/).map((p: string) => p.trim()).filter((p: string) => p);
+        } else if (productText.includes(',')) {
+          bestProducts = productText.split(',').map((p: string) => p.trim()).filter((p: string) => p);
+        } else {
+          bestProducts = [productText];
+        }
+      }
+      
+      // Extract marketing technique
+      const techniqueMatch = aiResponse.match(/Marketing Technique:?\s*([\s\S]*?)(?=Conversation Starter:|$)/i);
+      if (techniqueMatch && techniqueMatch[1]) {
+        marketingTechnique = techniqueMatch[1].trim();
+      }
+      
+      // Extract conversation starter
+      const starterMatch = aiResponse.match(/Conversation Starter:?\s*([\s\S]*?)(?=Conversation Sequence:|$)/i);
+      if (starterMatch && starterMatch[1]) {
+        conversationStarter = starterMatch[1].trim();
+      }
+      
+      // Extract conversation sequence
+      const sequenceMatch = aiResponse.match(/Conversation Sequence:?\s*([\s\S]*?)(?=$)/i);
+      if (sequenceMatch && sequenceMatch[1]) {
+        const conversationSequenceText = sequenceMatch[1].trim();
+        
+        // Try to parse as a numbered list
+        const numberedSteps = conversationSequenceText.match(/\d+\.\s*(.*?)(?=\n\d+\.|\n*$)/gs);
+        if (numberedSteps) {
+          conversationSequence = numberedSteps.map(step => {
+            return step.replace(/^\d+\.\s*/, '').trim();
+          });
+        } else {
+          // Split by lines and filter out empty lines
+          conversationSequence = conversationSequenceText
+            .split('\n')
+            .map(line => line.trim())
+            .filter(line => line.length > 0);
+        }
+      }
+      
+      // If we still don't have a conversation sequence, try to find a numbered list anywhere in the response
+      if (conversationSequence.length === 0) {
+        const numberedListMatch = aiResponse.match(/(?:\n\s*\d+\.\s*[^\n]+)+/g);
+        if (numberedListMatch) {
+          const steps = numberedListMatch[0].split(/\n\s*\d+\.\s*/).filter((s: string) => s.trim());
+          conversationSequence = steps;
+        }
+      }
     }
+    
+    // Create the marketing plan object
+    const marketingPlan = {
+      bestProducts,
+      marketingTechnique,
+      conversationStarter,
+      conversationSequence
+    };
+    
+    console.log("Parsed Marketing Plan:", marketingPlan);
+    
+    return NextResponse.json({ plan: marketingPlan });
   } catch (error) {
-    console.error('Error generating marketing plan:', error);
+    console.error('Error in marketing plan API:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
