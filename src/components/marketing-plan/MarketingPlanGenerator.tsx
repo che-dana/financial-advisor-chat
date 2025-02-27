@@ -20,6 +20,32 @@ export function MarketingPlanGenerator() {
     setIsGenerating(true);
     
     try {
+      // Format user profile for the prompt
+      const formattedUserProfile = {
+        personalityTraits: {
+          openness: userProfile.openness,
+          conscientiousness: userProfile.conscientiousness,
+          extraversion: userProfile.extraversion,
+          agreeableness: userProfile.agreeableness,
+          neuroticism: userProfile.neuroticism
+        },
+        demographics: {
+          educationLevel: userProfile.educationLevel,
+          incomeLevel: userProfile.incomeLevel,
+          housingStatus: userProfile.housingStatus,
+          vehicleOwnership: userProfile.vehicleOwnership,
+          workNature: userProfile.workNature,
+          familyDependants: userProfile.familyDependants,
+          age: userProfile.age,
+          behavioralTrait: userProfile.behavioralTrait
+        },
+        investmentStatus: {
+          danaPlus: userProfile.danaPlus,
+          reksadana: userProfile.reksadana,
+          eMAS: userProfile.eMAS
+        }
+      };
+
       // Call the marketing plan API
       const response = await fetch('/api/marketing-plan', {
         method: 'POST',
@@ -28,7 +54,7 @@ export function MarketingPlanGenerator() {
         },
         body: JSON.stringify({
           prompt: currentPrompt,
-          userProfile,
+          userProfile: formattedUserProfile,
           knowledgeBase
         }),
       });
@@ -82,6 +108,23 @@ export function MarketingPlanGenerator() {
         <CardTitle>Marketing Plan Generator</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        <div className="mb-4 p-3 bg-muted rounded-md">
+          <h3 className="text-sm font-medium mb-2">Current User Profile:</h3>
+          <div className="text-xs space-y-1">
+            <p><strong>Personality:</strong> {userProfile.openness === 'High' ? 'Open' : 'Conservative'}, 
+               {userProfile.conscientiousness === 'High' ? ' Conscientious' : ' Flexible'},
+               {userProfile.extraversion === 'High' ? ' Extraverted' : ' Introverted'}</p>
+            <p><strong>Demographics:</strong> {userProfile.age} years, {userProfile.educationLevel} education, {userProfile.incomeLevel} income</p>
+            <p><strong>Financial Behavior:</strong> {userProfile.behavioralTrait}</p>
+            <p><strong>Current Products:</strong> 
+              {userProfile.danaPlus === 'Yes' ? ' DANA+' : ''} 
+              {userProfile.reksadana === 'Yes' ? ' Reksadana' : ''} 
+              {userProfile.eMAS === 'Yes' ? ' eMAS' : ''}
+              {userProfile.danaPlus === 'No' && userProfile.reksadana === 'No' && userProfile.eMAS === 'No' ? ' None' : ''}
+            </p>
+          </div>
+        </div>
+        
         <Textarea
           value={currentPrompt}
           onChange={(e) => setCurrentPrompt(e.target.value)}

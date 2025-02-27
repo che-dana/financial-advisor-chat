@@ -14,24 +14,37 @@ export async function POST(request: Request) {
   try {
     const { prompt, userProfile, knowledgeBase } = await request.json();
 
+    // Format the user profile for the prompt
+    const userProfileFormatted = `
+User Profile:
+- Big 5 Personality: Openness (${userProfile.personalityTraits.openness}), 
+  Conscientiousness (${userProfile.personalityTraits.conscientiousness}), 
+  Extraversion (${userProfile.personalityTraits.extraversion}), 
+  Agreeableness (${userProfile.personalityTraits.agreeableness}), 
+  Neuroticism (${userProfile.personalityTraits.neuroticism})
+- Education Level: ${userProfile.demographics.educationLevel}
+- Income Level: ${userProfile.demographics.incomeLevel}
+- Housing Status: ${userProfile.demographics.housingStatus}
+- Vehicle Ownership: ${userProfile.demographics.vehicleOwnership}
+- Nature of Work: ${userProfile.demographics.workNature}
+- Family Dependents: ${userProfile.demographics.familyDependants}
+- Age: ${userProfile.demographics.age}
+- Behavioral Trait: ${userProfile.demographics.behavioralTrait}
+- Investment Purchase Status: 
+  Dana+: ${userProfile.investmentStatus.danaPlus === 'Yes' ? 'Purchased' : 'Not Purchased'}
+  Emas: ${userProfile.investmentStatus.eMAS === 'Yes' ? 'Purchased' : 'Not Purchased'}
+  Reksa Dana: ${userProfile.investmentStatus.reksadana === 'Yes' ? 'Purchased' : 'Not Purchased'}
+`;
+
     // Construct the full prompt with context
     const fullPrompt = `
-      ${prompt}
-      
-      User Profile:
-      ${JSON.stringify(userProfile, null, 2)}
-      
-      Knowledge Base:
-      ${JSON.stringify(knowledgeBase, null, 2)}
-      
-      Please generate a marketing plan in the following JSON format:
-      {
-        "bestProducts": ["product1", "product2"],
-        "marketingTechnique": "description of technique",
-        "conversationStarter": "opening line",
-        "conversationSequence": ["step 1", "step 2", "step 3"]
-      }
-    `;
+${prompt}
+
+${userProfileFormatted}
+
+Knowledge Base Context:
+${JSON.stringify(knowledgeBase, null, 2)}
+`;
 
     // Call Azure OpenAI API
     const response = await fetch(`${azureConfig.apiBase}/openai/deployments/${azureConfig.deploymentName}/chat/completions?api-version=${azureConfig.apiVersion}`, {
