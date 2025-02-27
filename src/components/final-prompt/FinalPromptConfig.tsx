@@ -6,12 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useFinalPrompt } from '@/contexts/FinalPromptContext';
 import { useUserProfile } from '@/contexts/UserProfileContext';
+import { useChat } from '@/contexts/ChatContext';
 import { useToast } from '@/components/ui/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export function FinalPromptConfig() {
   const { finalPrompt, setFinalPrompt, savePromptVersion, promptVersions, loadPromptVersion, activePromptId } = useFinalPrompt();
   const { userProfile } = useUserProfile();
+  const { clearMessages } = useChat();
   const { toast } = useToast();
 
   const handleSavePrompt = () => {
@@ -19,6 +21,14 @@ export function FinalPromptConfig() {
     toast({
       title: "Prompt Saved",
       description: "Your prompt has been saved successfully.",
+    });
+  };
+
+  const handleReloadChat = () => {
+    clearMessages();
+    toast({
+      title: "Chat Reloaded",
+      description: "The chat has been cleared and will use the current prompt.",
     });
   };
 
@@ -100,10 +110,19 @@ export function FinalPromptConfig() {
           className="min-h-[200px]"
         />
         
-        <div className="flex justify-between">
-          <Button onClick={handleSavePrompt}>
-            Save Prompt Version
-          </Button>
+        <div className="flex justify-between gap-2">
+          <div className="flex gap-2">
+            <Button onClick={handleSavePrompt}>
+              Save Prompt Version
+            </Button>
+            
+            <Button 
+              onClick={handleReloadChat} 
+              variant="outline"
+            >
+              Reload Chat
+            </Button>
+          </div>
           
           {promptVersions.length > 0 && (
             <Select 
