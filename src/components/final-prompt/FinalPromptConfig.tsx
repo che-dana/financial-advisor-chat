@@ -9,14 +9,16 @@ import { useUserProfile } from '@/contexts/UserProfileContext';
 import { useChat } from '@/contexts/ChatContext';
 import { useToast } from '@/components/ui/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, Info } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export function FinalPromptConfig() {
-  const { finalPrompt, setFinalPrompt, savePromptVersion, promptVersions, loadPromptVersion, activePromptId } = useFinalPrompt();
+  const { finalPrompt, setFinalPrompt, savePromptVersion, promptVersions, loadPromptVersion, activePromptId, fullPromptWithContext } = useFinalPrompt();
   const { userProfile } = useUserProfile();
   const { clearMessages } = useChat();
   const { toast } = useToast();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>("edit");
 
   const handleSavePrompt = () => {
     savePromptVersion();
@@ -67,26 +69,29 @@ export function FinalPromptConfig() {
 
   // Format the work nature for display
   const formatWorkNature = () => {
-    switch (userProfile.workNature) {
-      case 'Salaried': return 'Employee';
-      case 'Self-employed': return 'Self-employed';
-      case 'Freelancer': return 'Freelancer';
-      case 'Retired': return 'Retired';
-      default: return userProfile.workNature;
-    }
+    return userProfile.workNature;
   };
 
   return (
-    <Card>
-      <CardHeader className="py-3 cursor-pointer flex flex-row items-center justify-between" onClick={() => setIsCollapsed(!isCollapsed)}>
-        <CardTitle>Final Prompt Configuration</CardTitle>
+    <Card className="shadow-md border-gray-200 dark:border-gray-700">
+      <CardHeader 
+        className="py-3 cursor-pointer flex flex-row items-center justify-between"
+        onClick={() => setIsCollapsed(!isCollapsed)}
+      >
+        <CardTitle className="text-sm">Final Prompt Configuration</CardTitle>
         {isCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
       </CardHeader>
-      
       {!isCollapsed && (
         <CardContent className="space-y-4">
-          <div className="mb-4 p-3 bg-muted rounded-md">
-            <h3 className="text-sm font-medium mb-2">Current User Profile:</h3>
+          <div className="bg-blue-50 border border-blue-200 rounded-md p-3 flex items-start gap-3">
+            <Info className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-blue-700">
+              <p className="font-medium">Knowledge Base Integration</p>
+              <p>The knowledge base is automatically integrated into your prompt. Use the placeholder <code className="bg-blue-100 px-1 py-0.5 rounded">[Knowledge base Product information will be inserted here]</code> to control where product details appear.</p>
+            </div>
+          </div>
+          
+          <div className="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-md border border-gray-200 dark:border-gray-700">
             <div className="text-xs space-y-1">
               <p><strong>Personality:</strong> 
                 Openness: {userProfile.openness}, 
@@ -108,16 +113,33 @@ export function FinalPromptConfig() {
             </div>
           </div>
           
-          <Textarea
-            value={finalPrompt}
-            onChange={(e) => setFinalPrompt(e.target.value)}
-            placeholder="Configure your final prompt..."
-            className="min-h-[200px]"
-          />
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid grid-cols-2 mb-2">
+              <TabsTrigger value="edit">Edit Prompt</TabsTrigger>
+              <TabsTrigger value="preview">Preview Full Prompt</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="edit" className="mt-0">
+              <Textarea
+                value={finalPrompt}
+                onChange={(e) => setFinalPrompt(e.target.value)}
+                placeholder="Configure your final prompt..."
+                className="min-h-[200px] font-mono text-sm"
+              />
+            </TabsContent>
+            
+            <TabsContent value="preview" className="mt-0">
+              <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md p-3 h-[200px] overflow-auto custom-scrollbar">
+                <pre className="text-xs whitespace-pre-wrap font-mono text-gray-800 dark:text-gray-200">
+                  {fullPromptWithContext}
+                </pre>
+              </div>
+            </TabsContent>
+          </Tabs>
           
           <div className="flex justify-between gap-2">
             <div className="flex gap-2">
-              <Button onClick={handleSavePrompt}>
+              <Button onClick={handleSavePrompt} className="bg-blue-600 hover:bg-blue-700">
                 Save Prompt Version
               </Button>
               

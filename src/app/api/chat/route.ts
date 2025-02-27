@@ -17,7 +17,7 @@ export async function POST(request: Request) {
 
     // Format the user profile for the prompt
     const userProfileFormatted = `
-User Profile:
+## User Profile:
 - Big 5 Personality: Openness (${userProfile.openness}), 
   Conscientiousness (${userProfile.conscientiousness}), 
   Extraversion (${userProfile.extraversion}), 
@@ -37,33 +37,14 @@ User Profile:
   Reksa Dana: ${userProfile.reksadana === 'Yes' ? 'Purchased' : 'Not Purchased'}
 `;
 
-    // Format knowledge base for the prompt
-    const knowledgeBaseFormatted = `
-Product Information:
-1. DANA+:
-   - Description: ${knowledgeBase.danaPlus.description}
-   - Features: ${knowledgeBase.danaPlus.features}
-   - Benefits: ${knowledgeBase.danaPlus.benefits}
-   - Minimum Investment: ${knowledgeBase.danaPlus.minimumInvestment}
-   - Return Rate: ${knowledgeBase.danaPlus.returnRate}
-   - Risk Level: ${knowledgeBase.danaPlus.riskLevel}
-
-2. Reksa Dana:
-   - Description: ${knowledgeBase.reksadana.description}
-   - Features: ${knowledgeBase.reksadana.features}
-   - Benefits: ${knowledgeBase.reksadana.benefits}
-   - Minimum Investment: ${knowledgeBase.reksadana.minimumInvestment}
-   - Return Rate: ${knowledgeBase.reksadana.returnRate}
-   - Risk Level: ${knowledgeBase.reksadana.riskLevel}
-
-3. eMAS:
-   - Description: ${knowledgeBase.eMAS.description}
-   - Features: ${knowledgeBase.eMAS.features}
-   - Benefits: ${knowledgeBase.eMAS.benefits}
-   - Minimum Investment: ${knowledgeBase.eMAS.minimumInvestment}
-   - Return Rate: ${knowledgeBase.eMAS.returnRate}
-   - Risk Level: ${knowledgeBase.eMAS.riskLevel}
-`;
+    // Use the finalPrompt directly, replacing the user profile placeholder if it exists
+    let completePrompt = finalPrompt;
+    if (completePrompt.includes('[User profile will be inserted here]')) {
+      completePrompt = completePrompt.replace('[User profile will be inserted here]', userProfileFormatted);
+    } else {
+      // If no placeholder, append the user profile
+      completePrompt = completePrompt + "\n\n" + userProfileFormatted;
+    }
 
     // Call Azure OpenAI API
     const response = await fetch(`${azureConfig.apiBase}/openai/deployments/${azureConfig.deploymentName}/chat/completions?api-version=${azureConfig.apiVersion}`, {
@@ -74,7 +55,7 @@ Product Information:
       },
       body: JSON.stringify({
         messages: [
-          { role: "system", content: finalPrompt + "\n\n" + userProfileFormatted + "\n\n" + knowledgeBaseFormatted },
+          { role: "system", content: completePrompt },
           { role: "user", content: message }
         ],
         temperature: 0.7,
