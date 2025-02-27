@@ -11,9 +11,9 @@ import { ChevronDown, ChevronRight } from 'lucide-react';
 export function UserProfileSidebar() {
   const { userProfile, updateUserProfile } = useUserProfile();
   const [expandedSections, setExpandedSections] = useState({
-    personalityTraits: true,
-    demographics: true,
-    investmentStatus: true
+    personalityTraits: false,
+    demographics: false,
+    investmentStatus: false
   });
 
   const toggleSection = (section: 'personalityTraits' | 'demographics' | 'investmentStatus') => {

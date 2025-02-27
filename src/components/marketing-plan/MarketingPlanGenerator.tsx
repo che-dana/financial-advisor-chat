@@ -15,7 +15,7 @@ export function MarketingPlanGenerator() {
   const { userProfile } = useUserProfile();
   const { knowledgeBase } = useKnowledgeBase();
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
   const { toast } = useToast();
 
   const handleGeneratePlan = async () => {
@@ -150,17 +150,17 @@ export function MarketingPlanGenerator() {
   };
 
   return (
-    <Card className="h-full flex flex-col shadow-md">
+    <Card className={`flex flex-col ${isCollapsed ? 'h-[80px]' : 'h-full'}`}>
       <CardHeader 
         className="py-3 cursor-pointer flex flex-row items-center justify-between"
         onClick={() => setIsCollapsed(!isCollapsed)}
       >
-        <CardTitle className="text-lg">Marketing Plan Generator</CardTitle>
-        {isCollapsed ? <ChevronDown className="h-5 w-5" /> : <ChevronUp className="h-5 w-5" />}
+        <CardTitle className="text-sm">Marketing Plan Generator</CardTitle>
+        {isCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
       </CardHeader>
       
       {!isCollapsed && (
-        <CardContent className="space-y-4 flex-grow overflow-auto">
+        <CardContent className="space-y-4 flex-1 overflow-y-auto custom-scrollbar">
           <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md text-xs">
             <div className="flex items-start gap-2">
               <div>
