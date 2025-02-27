@@ -11,7 +11,7 @@ import { ProductInfo } from '@/contexts/KnowledgeBaseContext';
 interface ProductEditorProps {
   product: 'danaPlus' | 'reksadana' | 'eMAS';
   productInfo: ProductInfo;
-  updateProductInfo: (product: 'danaPlus' | 'reksadana' | 'eMAS', info: ProductInfo) => void;
+  updateProductInfo: (product: 'danaPlus' | 'reksadana' | 'eMAS', info: Partial<ProductInfo>) => void;
   onSave: () => void;
 }
 
@@ -110,6 +110,28 @@ export function ProductEditor({ product, productInfo, updateProductInfo, onSave 
             id={`${product}-returnRate`}
             value={productInfo.returnRate}
             onChange={(e) => handleChange('returnRate', e.target.value)}
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor={`${product}-historicalPerformance`}>Historical Performance</Label>
+          <Textarea
+            id={`${product}-historicalPerformance`}
+            value={productInfo.historicalPerformance}
+            onChange={(e) => handleChange('historicalPerformance', e.target.value)}
+            placeholder="Enter historical performance data (e.g., 2022: 3.5%, 2021: 3.2%)..."
+            className="min-h-[100px]"
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor={`${product}-faqs`}>FAQs</Label>
+          <Textarea
+            id={`${product}-faqs`}
+            value={productInfo.faqs}
+            onChange={(e) => handleChange('faqs', e.target.value)}
+            placeholder="Enter FAQs in Q&A format (e.g., Q: How do I start? A: Simply open the app...)..."
+            className="min-h-[150px]"
           />
         </div>
         

@@ -13,6 +13,8 @@ export interface ProductInfo {
   minimumInvestment: string;
   returnRate: string;
   additionalInfo: string;
+  faqs: string;
+  historicalPerformance: string;
 }
 
 // Define the knowledge base type
@@ -33,7 +35,9 @@ const defaultKnowledgeBase: KnowledgeBase = {
     riskLevel: 'Low',
     minimumInvestment: 'Rp 10,000',
     returnRate: '3-4% p.a.',
-    additionalInfo: 'DANA+ is protected by LPS (Indonesia Deposit Insurance Corporation) up to Rp 2 billion.'
+    additionalInfo: 'DANA+ is protected by LPS (Indonesia Deposit Insurance Corporation) up to Rp 2 billion.',
+    faqs: 'Q: How do I start using DANA+?\nA: Simply open your DANA app, go to the DANA+ section, and follow the instructions to transfer funds.\n\nQ: Is there a lock-in period?\nA: No, you can withdraw your funds anytime without penalty.',
+    historicalPerformance: '2022: 3.5%\n2021: 3.2%\n2020: 4.0%'
   },
   reksadana: {
     name: 'Reksa Dana',
@@ -44,7 +48,9 @@ const defaultKnowledgeBase: KnowledgeBase = {
     riskLevel: 'Low to High (depending on fund type)',
     minimumInvestment: 'Rp 100,000',
     returnRate: '5-15% p.a. (varies by fund type)',
-    additionalInfo: 'Reksa Dana is regulated by OJK (Financial Services Authority of Indonesia).'
+    additionalInfo: 'Reksa Dana is regulated by OJK (Financial Services Authority of Indonesia).',
+    faqs: 'Q: What types of Reksa Dana are available?\nA: We offer Money Market, Fixed Income, Equity, and Mixed funds to suit different risk profiles.\n\nQ: How long should I invest in Reksa Dana?\nA: It depends on the fund type, but generally 1-5+ years for optimal results.',
+    historicalPerformance: 'Money Market Fund:\n2022: 4.8%\n2021: 4.5%\n2020: 5.2%\n\nEquity Fund:\n2022: 8.7%\n2021: 12.3%\n2020: -2.5% (COVID impact)'
   },
   eMAS: {
     name: 'eMAS',
@@ -55,7 +61,9 @@ const defaultKnowledgeBase: KnowledgeBase = {
     riskLevel: 'Medium',
     minimumInvestment: 'As low as Rp 5,000',
     returnRate: 'Based on gold price appreciation',
-    additionalInfo: 'Gold is stored in secure vaults and is 99.99% pure gold certified by ANTAM.'
+    additionalInfo: 'Gold is stored in secure vaults and is 99.99% pure gold certified by ANTAM.',
+    faqs: 'Q: Can I convert my digital gold to physical gold?\nA: Yes, you can request physical delivery for a minimum of 1 gram.\n\nQ: How is the gold price determined?\nA: The price follows international gold prices with a small spread for buying and selling.',
+    historicalPerformance: '2022: 7.2%\n2021: -3.5%\n2020: 24.6%\n2019: 18.3%\n\nNote: Gold can be volatile but has historically been a good store of value over long periods.'
   }
 };
 
