@@ -1,26 +1,79 @@
 import { NextResponse } from 'next/server';
 import { UserProfile } from '@/contexts/UserProfileContext';
 
+// Azure OpenAI configuration
+const azureConfig = {
+  apiBase: "https://dana-automation-copilot-ncus.openai.azure.com/",
+  deploymentName: "gpt-4o",
+  apiKey: "d636779ca07d47a0a9460d14972766a7",
+  apiVersion: "2023-05-15",
+  apiType: "azure"
+};
+
 export async function POST(request: Request) {
   try {
     const { prompt, userProfile, knowledgeBase } = await request.json();
 
-    // In a real implementation, this would call an AI service
-    // For now, we'll simulate a response
+    // Construct the full prompt with context
+    const fullPrompt = `
+      ${prompt}
+      
+      User Profile:
+      ${JSON.stringify(userProfile, null, 2)}
+      
+      Knowledge Base:
+      ${JSON.stringify(knowledgeBase, null, 2)}
+      
+      Please generate a marketing plan in the following JSON format:
+      {
+        "bestProducts": ["product1", "product2"],
+        "marketingTechnique": "description of technique",
+        "conversationStarter": "opening line",
+        "conversationSequence": ["step 1", "step 2", "step 3"]
+      }
+    `;
+
+    // Call Azure OpenAI API
+    const response = await fetch(`${azureConfig.apiBase}/openai/deployments/${azureConfig.deploymentName}/chat/completions?api-version=${azureConfig.apiVersion}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'api-key': azureConfig.apiKey
+      },
+      body: JSON.stringify({
+        messages: [
+          { role: "system", content: "You are a financial marketing expert. Generate marketing plans based on user profiles and product information." },
+          { role: "user", content: fullPrompt }
+        ],
+        temperature: 0.7,
+        max_tokens: 1000
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Azure OpenAI API error:', errorData);
+      return NextResponse.json({ error: 'Failed to generate marketing plan' }, { status: 500 });
+    }
+
+    const data = await response.json();
     
-    // Simulate processing time
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Generate a marketing plan based on the user profile
-    const plan = generateMarketingPlan(userProfile);
-    
-    return NextResponse.json({ plan });
+    // Extract and parse the JSON response
+    try {
+      const content = data.choices[0].message.content;
+      // Find JSON in the response (in case there's additional text)
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      const jsonString = jsonMatch ? jsonMatch[0] : content;
+      const plan = JSON.parse(jsonString);
+      
+      return NextResponse.json({ plan });
+    } catch (parseError) {
+      console.error('Error parsing AI response:', parseError);
+      return NextResponse.json({ error: 'Failed to parse marketing plan' }, { status: 500 });
+    }
   } catch (error) {
-    console.error('Error in marketing plan API:', error);
-    return NextResponse.json(
-      { error: 'Failed to generate marketing plan' },
-      { status: 500 }
-    );
+    console.error('Error generating marketing plan:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 

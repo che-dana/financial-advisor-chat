@@ -7,12 +7,14 @@ import { useMarketingPlan } from '@/contexts/MarketingPlanContext';
 import { useUserProfile } from '@/contexts/UserProfileContext';
 import { useKnowledgeBase } from '@/contexts/KnowledgeBaseContext';
 import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/components/ui/use-toast';
 
 export function MarketingPlanGenerator() {
   const { marketingPlans, currentPrompt, setCurrentPrompt, addMarketingPlan } = useMarketingPlan();
   const { userProfile } = useUserProfile();
   const { knowledgeBase } = useKnowledgeBase();
   const [isGenerating, setIsGenerating] = useState(false);
+  const { toast } = useToast();
 
   const handleGeneratePlan = async () => {
     setIsGenerating(true);
@@ -32,16 +34,26 @@ export function MarketingPlanGenerator() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to generate marketing plan');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to generate marketing plan');
       }
 
       const data = await response.json();
       
       // Add the generated plan
       addMarketingPlan(data.plan);
+      
+      toast({
+        title: "Marketing Plan Generated",
+        description: "Your marketing plan has been successfully created.",
+      });
     } catch (error) {
       console.error('Error generating marketing plan:', error);
-      // Handle error
+      toast({
+        title: "Generation Failed",
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        variant: "destructive"
+      });
     } finally {
       setIsGenerating(false);
     }
