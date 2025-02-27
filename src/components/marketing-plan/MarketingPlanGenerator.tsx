@@ -8,12 +8,14 @@ import { useUserProfile } from '@/contexts/UserProfileContext';
 import { useKnowledgeBase } from '@/contexts/KnowledgeBaseContext';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 export function MarketingPlanGenerator() {
   const { marketingPlans, currentPrompt, setCurrentPrompt, addMarketingPlan } = useMarketingPlan();
   const { userProfile } = useUserProfile();
   const { knowledgeBase } = useKnowledgeBase();
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const { toast } = useToast();
 
   const handleGeneratePlan = async () => {
@@ -86,19 +88,31 @@ export function MarketingPlanGenerator() {
   };
 
   const determineProducts = () => {
-    return marketingPlans[0]?.bestProducts || [];
+    if (marketingPlans.length === 0 || !marketingPlans[0].bestProducts) {
+      return ['No products selected'];
+    }
+    return marketingPlans[0].bestProducts;
   };
 
   const determineTechnique = () => {
-    return marketingPlans[0]?.marketingTechnique || '';
+    if (marketingPlans.length === 0 || !marketingPlans[0].marketingTechnique) {
+      return 'No technique specified';
+    }
+    return marketingPlans[0].marketingTechnique;
   };
 
   const generateConversationStarter = () => {
-    return marketingPlans[0]?.conversationStarter || '';
+    if (marketingPlans.length === 0 || !marketingPlans[0].conversationStarter) {
+      return 'No conversation starter specified';
+    }
+    return marketingPlans[0].conversationStarter;
   };
 
   const generateSequence = () => {
-    return marketingPlans[0]?.conversationSequence || [];
+    if (marketingPlans.length === 0 || !marketingPlans[0].conversationSequence) {
+      return ['No sequence specified'];
+    }
+    return marketingPlans[0].conversationSequence;
   };
 
   // Format the family dependents display
@@ -145,79 +159,83 @@ export function MarketingPlanGenerator() {
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="py-3 cursor-pointer flex flex-row items-center justify-between" onClick={() => setIsCollapsed(!isCollapsed)}>
         <CardTitle>Marketing Plan Generator</CardTitle>
+        {isCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="mb-4 p-3 bg-muted rounded-md">
-          <h3 className="text-sm font-medium mb-2">Current User Profile:</h3>
-          <div className="text-xs space-y-1">
-            <p><strong>Personality:</strong> 
-              Openness: {userProfile.openness}, 
-              Conscientiousness: {userProfile.conscientiousness}, 
-              Extraversion: {userProfile.extraversion}, 
-              Agreeableness: {userProfile.agreeableness}, 
-              Neuroticism: {userProfile.neuroticism}
-            </p>
-            <p><strong>Demographics:</strong> {userProfile.age} years old, {userProfile.educationLevel} education, {userProfile.incomeLevel} income</p>
-            <p><strong>Living Situation:</strong> {formatHousingStatus()}, {formatVehicleOwnership()}</p>
-            <p><strong>Work & Family:</strong> {formatWorkNature()}, {formatFamilyDependents()}</p>
-            <p><strong>Financial Behavior:</strong> {userProfile.behavioralTrait}</p>
-            <p><strong>Current Products:</strong> 
-              {userProfile.danaPlus === 'Yes' ? ' DANA+' : ''} 
-              {userProfile.reksadana === 'Yes' ? ' Reksadana' : ''} 
-              {userProfile.eMAS === 'Yes' ? ' eMAS' : ''}
-              {userProfile.danaPlus === 'No' && userProfile.reksadana === 'No' && userProfile.eMAS === 'No' ? ' None' : ''}
-            </p>
-          </div>
-        </div>
-        
-        <Textarea
-          value={currentPrompt}
-          onChange={(e) => setCurrentPrompt(e.target.value)}
-          placeholder="Enter your marketing prompt..."
-          className="min-h-[100px]"
-        />
-        
-        <Button 
-          onClick={handleGeneratePlan} 
-          disabled={isGenerating}
-          className="w-full"
-        >
-          {isGenerating ? 'Generating...' : 'Generate Marketing Plan'}
-        </Button>
-        
-        {marketingPlans.length > 0 && (
-          <div className="mt-4 space-y-4">
-            <h3 className="font-medium">Latest Marketing Plan</h3>
-            <div className="border rounded-md p-4 space-y-3">
-              <div>
-                <h4 className="text-sm font-medium">Best Products</h4>
-                <p>{determineProducts().join(', ')}</p>
-              </div>
-              
-              <div>
-                <h4 className="text-sm font-medium">Marketing Technique</h4>
-                <p>{determineTechnique()}</p>
-              </div>
-              
-              <div>
-                <h4 className="text-sm font-medium">Conversation Starter</h4>
-                <p>&quot;{generateConversationStarter()}&quot;</p>
-              </div>
-              
-              <div>
-                <h4 className="text-sm font-medium">Conversation Sequence</h4>
-                <ol className="list-decimal list-inside">
-                  {generateSequence().map((step, index) => (
-                    <li key={index}>{step}</li>
-                  ))}
-                </ol>
-              </div>
+      
+      {!isCollapsed && (
+        <CardContent className="space-y-4">
+          <div className="mb-4 p-3 bg-muted rounded-md">
+            <h3 className="text-sm font-medium mb-2">Current User Profile:</h3>
+            <div className="text-xs space-y-1">
+              <p><strong>Personality:</strong> 
+                Openness: {userProfile.openness}, 
+                Conscientiousness: {userProfile.conscientiousness}, 
+                Extraversion: {userProfile.extraversion}, 
+                Agreeableness: {userProfile.agreeableness}, 
+                Neuroticism: {userProfile.neuroticism}
+              </p>
+              <p><strong>Demographics:</strong> {userProfile.age} years old, {userProfile.educationLevel} education, {userProfile.incomeLevel} income</p>
+              <p><strong>Living Situation:</strong> {formatHousingStatus()}, {formatVehicleOwnership()}</p>
+              <p><strong>Work & Family:</strong> {formatWorkNature()}, {formatFamilyDependents()}</p>
+              <p><strong>Financial Behavior:</strong> {userProfile.behavioralTrait}</p>
+              <p><strong>Current Products:</strong> 
+                {userProfile.danaPlus === 'Yes' ? ' DANA+' : ''} 
+                {userProfile.reksadana === 'Yes' ? ' Reksadana' : ''} 
+                {userProfile.eMAS === 'Yes' ? ' eMAS' : ''}
+                {userProfile.danaPlus === 'No' && userProfile.reksadana === 'No' && userProfile.eMAS === 'No' ? ' None' : ''}
+              </p>
             </div>
           </div>
-        )}
-      </CardContent>
+          
+          <Textarea
+            value={currentPrompt}
+            onChange={(e) => setCurrentPrompt(e.target.value)}
+            placeholder="Enter your marketing prompt..."
+            className="min-h-[100px]"
+          />
+          
+          <Button 
+            onClick={handleGeneratePlan} 
+            disabled={isGenerating}
+            className="w-full"
+          >
+            {isGenerating ? 'Generating...' : 'Generate Marketing Plan'}
+          </Button>
+          
+          {marketingPlans.length > 0 && (
+            <div className="mt-4 space-y-4">
+              <h3 className="font-medium">Latest Marketing Plan</h3>
+              <div className="border rounded-md p-4 space-y-3">
+                <div>
+                  <h4 className="text-sm font-medium">Best Products</h4>
+                  <p>{determineProducts().join(', ')}</p>
+                </div>
+                
+                <div>
+                  <h4 className="text-sm font-medium">Marketing Technique</h4>
+                  <p>{determineTechnique()}</p>
+                </div>
+                
+                <div>
+                  <h4 className="text-sm font-medium">Conversation Starter</h4>
+                  <p>&quot;{generateConversationStarter()}&quot;</p>
+                </div>
+                
+                <div>
+                  <h4 className="text-sm font-medium">Conversation Sequence</h4>
+                  <ol className="list-decimal list-inside">
+                    {generateSequence().map((step, index) => (
+                      <li key={index}>{step}</li>
+                    ))}
+                  </ol>
+                </div>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      )}
     </Card>
   );
 } 

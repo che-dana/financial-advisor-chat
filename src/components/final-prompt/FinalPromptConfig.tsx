@@ -1,6 +1,6 @@
 "use client"
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -9,12 +9,14 @@ import { useUserProfile } from '@/contexts/UserProfileContext';
 import { useChat } from '@/contexts/ChatContext';
 import { useToast } from '@/components/ui/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 export function FinalPromptConfig() {
   const { finalPrompt, setFinalPrompt, savePromptVersion, promptVersions, loadPromptVersion, activePromptId } = useFinalPrompt();
   const { userProfile } = useUserProfile();
   const { clearMessages } = useChat();
   const { toast } = useToast();
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const handleSavePrompt = () => {
     savePromptVersion();
@@ -76,73 +78,77 @@ export function FinalPromptConfig() {
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="py-3 cursor-pointer flex flex-row items-center justify-between" onClick={() => setIsCollapsed(!isCollapsed)}>
         <CardTitle>Final Prompt Configuration</CardTitle>
+        {isCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="mb-4 p-3 bg-muted rounded-md">
-          <h3 className="text-sm font-medium mb-2">Current User Profile:</h3>
-          <div className="text-xs space-y-1">
-            <p><strong>Personality:</strong> 
-              Openness: {userProfile.openness}, 
-              Conscientiousness: {userProfile.conscientiousness}, 
-              Extraversion: {userProfile.extraversion}, 
-              Agreeableness: {userProfile.agreeableness}, 
-              Neuroticism: {userProfile.neuroticism}
-            </p>
-            <p><strong>Demographics:</strong> {userProfile.age} years old, {userProfile.educationLevel} education, {userProfile.incomeLevel} income</p>
-            <p><strong>Living Situation:</strong> {formatHousingStatus()}, {formatVehicleOwnership()}</p>
-            <p><strong>Work & Family:</strong> {formatWorkNature()}, {formatFamilyDependents()}</p>
-            <p><strong>Financial Behavior:</strong> {userProfile.behavioralTrait}</p>
-            <p><strong>Current Products:</strong> 
-              {userProfile.danaPlus === 'Yes' ? ' DANA+' : ''} 
-              {userProfile.reksadana === 'Yes' ? ' Reksadana' : ''} 
-              {userProfile.eMAS === 'Yes' ? ' eMAS' : ''}
-              {userProfile.danaPlus === 'No' && userProfile.reksadana === 'No' && userProfile.eMAS === 'No' ? ' None' : ''}
-            </p>
-          </div>
-        </div>
-        
-        <Textarea
-          value={finalPrompt}
-          onChange={(e) => setFinalPrompt(e.target.value)}
-          placeholder="Configure your final prompt..."
-          className="min-h-[200px]"
-        />
-        
-        <div className="flex justify-between gap-2">
-          <div className="flex gap-2">
-            <Button onClick={handleSavePrompt}>
-              Save Prompt Version
-            </Button>
-            
-            <Button 
-              onClick={handleReloadChat} 
-              variant="outline"
-            >
-              Reload Chat
-            </Button>
+      
+      {!isCollapsed && (
+        <CardContent className="space-y-4">
+          <div className="mb-4 p-3 bg-muted rounded-md">
+            <h3 className="text-sm font-medium mb-2">Current User Profile:</h3>
+            <div className="text-xs space-y-1">
+              <p><strong>Personality:</strong> 
+                Openness: {userProfile.openness}, 
+                Conscientiousness: {userProfile.conscientiousness}, 
+                Extraversion: {userProfile.extraversion}, 
+                Agreeableness: {userProfile.agreeableness}, 
+                Neuroticism: {userProfile.neuroticism}
+              </p>
+              <p><strong>Demographics:</strong> {userProfile.age} years old, {userProfile.educationLevel} education, {userProfile.incomeLevel} income</p>
+              <p><strong>Living Situation:</strong> {formatHousingStatus()}, {formatVehicleOwnership()}</p>
+              <p><strong>Work & Family:</strong> {formatWorkNature()}, {formatFamilyDependents()}</p>
+              <p><strong>Financial Behavior:</strong> {userProfile.behavioralTrait}</p>
+              <p><strong>Current Products:</strong> 
+                {userProfile.danaPlus === 'Yes' ? ' DANA+' : ''} 
+                {userProfile.reksadana === 'Yes' ? ' Reksadana' : ''} 
+                {userProfile.eMAS === 'Yes' ? ' eMAS' : ''}
+                {userProfile.danaPlus === 'No' && userProfile.reksadana === 'No' && userProfile.eMAS === 'No' ? ' None' : ''}
+              </p>
+            </div>
           </div>
           
-          {promptVersions.length > 0 && (
-            <Select 
-              value={activePromptId || ''} 
-              onValueChange={(value) => loadPromptVersion(value)}
-            >
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Load saved prompt" />
-              </SelectTrigger>
-              <SelectContent>
-                {promptVersions.map(version => (
-                  <SelectItem key={version.id} value={version.id}>
-                    {new Date(version.timestamp).toLocaleString()}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        </div>
-      </CardContent>
+          <Textarea
+            value={finalPrompt}
+            onChange={(e) => setFinalPrompt(e.target.value)}
+            placeholder="Configure your final prompt..."
+            className="min-h-[200px]"
+          />
+          
+          <div className="flex justify-between gap-2">
+            <div className="flex gap-2">
+              <Button onClick={handleSavePrompt}>
+                Save Prompt Version
+              </Button>
+              
+              <Button 
+                onClick={handleReloadChat} 
+                variant="outline"
+              >
+                Reload Chat
+              </Button>
+            </div>
+            
+            {promptVersions.length > 0 && (
+              <Select 
+                value={activePromptId || ''} 
+                onValueChange={(value) => loadPromptVersion(value)}
+              >
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Load saved prompt" />
+                </SelectTrigger>
+                <SelectContent>
+                  {promptVersions.map(version => (
+                    <SelectItem key={version.id} value={version.id}>
+                      {new Date(version.timestamp).toLocaleString()}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+        </CardContent>
+      )}
     </Card>
   );
 } 

@@ -63,7 +63,7 @@ export function FinancialAdvisorChat() {
   };
 
   return (
-    <Card className="h-[600px] flex flex-col">
+    <Card className="h-[calc(100vh-120px)] flex flex-col">
       <CardHeader>
         <CardTitle>Financial Advisor Chat</CardTitle>
       </CardHeader>
