@@ -85,7 +85,6 @@ export function MarketingPlanGenerator() {
     }
   };
 
-  // Helper functions for the UI display
   const determineProducts = () => {
     return marketingPlans[0]?.bestProducts || [];
   };
@@ -102,6 +101,48 @@ export function MarketingPlanGenerator() {
     return marketingPlans[0]?.conversationSequence || [];
   };
 
+  // Format the family dependents display
+  const formatFamilyDependents = () => {
+    if (userProfile.familyDependants === 0) {
+      return 'No dependents';
+    } else if (userProfile.familyDependants === 1) {
+      return '1 dependent';
+    } else {
+      return `${userProfile.familyDependants} dependents`;
+    }
+  };
+
+  // Format the housing status for display
+  const formatHousingStatus = () => {
+    switch (userProfile.housingStatus) {
+      case 'Renting': return 'Renter';
+      case 'Own House': return 'Homeowner';
+      case 'Living with Family': return 'Living with family';
+      default: return userProfile.housingStatus;
+    }
+  };
+
+  // Format the vehicle ownership for display
+  const formatVehicleOwnership = () => {
+    switch (userProfile.vehicleOwnership) {
+      case 'None': return 'No vehicle';
+      case 'Car': return 'Car owner';
+      case 'Motorcycle': return 'Motorcycle owner';
+      default: return userProfile.vehicleOwnership;
+    }
+  };
+
+  // Format the work nature for display
+  const formatWorkNature = () => {
+    switch (userProfile.workNature) {
+      case 'Salaried': return 'Employee';
+      case 'Self-employed': return 'Self-employed';
+      case 'Freelancer': return 'Freelancer';
+      case 'Retired': return 'Retired';
+      default: return userProfile.workNature;
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -111,10 +152,16 @@ export function MarketingPlanGenerator() {
         <div className="mb-4 p-3 bg-muted rounded-md">
           <h3 className="text-sm font-medium mb-2">Current User Profile:</h3>
           <div className="text-xs space-y-1">
-            <p><strong>Personality:</strong> {userProfile.openness === 'High' ? 'Open' : 'Conservative'}, 
-               {userProfile.conscientiousness === 'High' ? ' Conscientious' : ' Flexible'},
-               {userProfile.extraversion === 'High' ? ' Extraverted' : ' Introverted'}</p>
-            <p><strong>Demographics:</strong> {userProfile.age} years, {userProfile.educationLevel} education, {userProfile.incomeLevel} income</p>
+            <p><strong>Personality:</strong> 
+              Openness: {userProfile.openness}, 
+              Conscientiousness: {userProfile.conscientiousness}, 
+              Extraversion: {userProfile.extraversion}, 
+              Agreeableness: {userProfile.agreeableness}, 
+              Neuroticism: {userProfile.neuroticism}
+            </p>
+            <p><strong>Demographics:</strong> {userProfile.age} years old, {userProfile.educationLevel} education, {userProfile.incomeLevel} income</p>
+            <p><strong>Living Situation:</strong> {formatHousingStatus()}, {formatVehicleOwnership()}</p>
+            <p><strong>Work & Family:</strong> {formatWorkNature()}, {formatFamilyDependents()}</p>
             <p><strong>Financial Behavior:</strong> {userProfile.behavioralTrait}</p>
             <p><strong>Current Products:</strong> 
               {userProfile.danaPlus === 'Yes' ? ' DANA+' : ''} 

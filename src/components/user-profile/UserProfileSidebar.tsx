@@ -152,7 +152,7 @@ export function UserProfileSidebar() {
               <Label htmlFor="incomeLevel">Income Level</Label>
               <Select 
                 value={userProfile.incomeLevel} 
-                onValueChange={(value) => updateUserProfile({ incomeLevel: value as 'Low' | 'Medium' | 'High' })}
+                onValueChange={(value) => updateUserProfile({ incomeLevel: value as any })}
               >
                 <SelectTrigger id="incomeLevel">
                   <SelectValue placeholder="Select level" />
@@ -169,7 +169,7 @@ export function UserProfileSidebar() {
               <Label htmlFor="housingStatus">Housing Status</Label>
               <Select 
                 value={userProfile.housingStatus} 
-                onValueChange={(value) => updateUserProfile({ housingStatus: value as 'Renting' | 'Own House' | 'Living with Family' })}
+                onValueChange={(value) => updateUserProfile({ housingStatus: value as any })}
               >
                 <SelectTrigger id="housingStatus">
                   <SelectValue placeholder="Select status" />
@@ -219,39 +219,35 @@ export function UserProfileSidebar() {
             
             <div className="space-y-2">
               <Label htmlFor="familyDependants">Family Dependants</Label>
-              <div className="pt-2">
-                <Slider
-                  id="familyDependants"
-                  min={0}
-                  max={10}
-                  step={1}
-                  value={[userProfile.familyDependants]}
-                  onValueChange={(value) => updateUserProfile({ familyDependants: value[0] })}
-                />
-                <div className="text-center mt-1">{userProfile.familyDependants}</div>
-              </div>
+              <Slider
+                id="familyDependants"
+                min={0}
+                max={10}
+                step={1}
+                value={[userProfile.familyDependants]}
+                onValueChange={(value) => updateUserProfile({ familyDependants: value[0] })}
+              />
+              <div className="text-center mt-1">{userProfile.familyDependants}</div>
             </div>
             
             <div className="space-y-2">
               <Label htmlFor="age">Age</Label>
-              <div className="pt-2">
-                <Slider
-                  id="age"
-                  min={18}
-                  max={100}
-                  step={1}
-                  value={[userProfile.age]}
-                  onValueChange={(value) => updateUserProfile({ age: value[0] })}
-                />
-                <div className="text-center mt-1">{userProfile.age}</div>
-              </div>
+              <Slider
+                id="age"
+                min={18}
+                max={100}
+                step={1}
+                value={[userProfile.age]}
+                onValueChange={(value) => updateUserProfile({ age: value[0] })}
+              />
+              <div className="text-center mt-1">{userProfile.age}</div>
             </div>
             
             <div className="space-y-2">
               <Label htmlFor="behavioralTrait">Behavioral Trait</Label>
               <Select 
                 value={userProfile.behavioralTrait} 
-                onValueChange={(value) => updateUserProfile({ behavioralTrait: value as 'Saver' | 'Spender' | 'Investor' })}
+                onValueChange={(value) => updateUserProfile({ behavioralTrait: value as any })}
               >
                 <SelectTrigger id="behavioralTrait">
                   <SelectValue placeholder="Select trait" />
