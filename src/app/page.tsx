@@ -11,10 +11,10 @@ export default function Home() {
         <div className="container mx-auto p-4 h-full flex flex-col">
           <h1 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-100">Financial Advisor Dashboard</h1>
           <div className="grid grid-cols-1 gap-6 h-[calc(100vh-120px)]">
-            <div className="h-full">
+            <div className="h-[60vh]">
               <FinancialAdvisorChat />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-[calc(40vh-60px)]">
               <MarketingPlanGenerator />
               <FinalPromptConfig />
             </div>

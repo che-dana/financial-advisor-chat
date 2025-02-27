@@ -69,47 +69,44 @@ export function FinalPromptConfig() {
 
   // Format the work nature for display
   const formatWorkNature = () => {
-    return userProfile.workNature;
+    switch (userProfile.workNature) {
+      case 'Salaried': return 'Salaried employee';
+      case 'Self-employed': return 'Self-employed';
+      case 'Freelancer': return 'Freelancer';
+      case 'Retired': return 'Retired';
+      default: return userProfile.workNature;
+    }
   };
 
   return (
-    <Card className="shadow-md border-gray-200 dark:border-gray-700">
+    <Card className="h-full flex flex-col shadow-md">
       <CardHeader 
         className="py-3 cursor-pointer flex flex-row items-center justify-between"
         onClick={() => setIsCollapsed(!isCollapsed)}
       >
-        <CardTitle className="text-sm">Final Prompt Configuration</CardTitle>
-        {isCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+        <CardTitle className="text-lg">Final Prompt Configuration</CardTitle>
+        {isCollapsed ? <ChevronDown className="h-5 w-5" /> : <ChevronUp className="h-5 w-5" />}
       </CardHeader>
+      
       {!isCollapsed && (
-        <CardContent className="space-y-4">
-          <div className="bg-blue-50 border border-blue-200 rounded-md p-3 flex items-start gap-3">
-            <Info className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-blue-700">
-              <p className="font-medium">Knowledge Base Integration</p>
-              <p>The knowledge base is automatically integrated into your prompt. Use the placeholder <code className="bg-blue-100 px-1 py-0.5 rounded">[Knowledge base Product information will be inserted here]</code> to control where product details appear.</p>
-            </div>
-          </div>
-          
-          <div className="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-md border border-gray-200 dark:border-gray-700">
-            <div className="text-xs space-y-1">
-              <p><strong>Personality:</strong> 
-                Openness: {userProfile.openness}, 
-                Conscientiousness: {userProfile.conscientiousness}, 
-                Extraversion: {userProfile.extraversion}, 
-                Agreeableness: {userProfile.agreeableness}, 
-                Neuroticism: {userProfile.neuroticism}
-              </p>
-              <p><strong>Demographics:</strong> {userProfile.age} years old, {userProfile.educationLevel} education, {userProfile.incomeLevel} income</p>
-              <p><strong>Living Situation:</strong> {formatHousingStatus()}, {formatVehicleOwnership()}</p>
-              <p><strong>Work & Family:</strong> {formatWorkNature()}, {formatFamilyDependents()}</p>
-              <p><strong>Financial Behavior:</strong> {userProfile.behavioralTrait}</p>
-              <p><strong>Current Products:</strong> 
-                {userProfile.danaPlus === 'Yes' ? ' DANA+' : ''} 
-                {userProfile.reksadana === 'Yes' ? ' Reksadana' : ''} 
-                {userProfile.eMAS === 'Yes' ? ' eMAS' : ''}
-                {userProfile.danaPlus === 'No' && userProfile.reksadana === 'No' && userProfile.eMAS === 'No' ? ' None' : ''}
-              </p>
+        <CardContent className="space-y-4 flex-grow overflow-auto">
+          <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md text-xs">
+            <div className="flex items-start gap-2">
+              <Info className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="font-medium mb-1">Current User Profile</p>
+                <p><strong>Personality:</strong> Openness ({userProfile.openness}), Conscientiousness ({userProfile.conscientiousness}), Extraversion ({userProfile.extraversion}), Agreeableness ({userProfile.agreeableness}), Neuroticism ({userProfile.neuroticism})</p>
+                <p><strong>Demographics:</strong> {userProfile.age} years old, {userProfile.educationLevel} education, {userProfile.incomeLevel} income</p>
+                <p><strong>Living Situation:</strong> {formatHousingStatus()}, {formatVehicleOwnership()}</p>
+                <p><strong>Work & Family:</strong> {formatWorkNature()}, {formatFamilyDependents()}</p>
+                <p><strong>Financial Behavior:</strong> {userProfile.behavioralTrait}</p>
+                <p><strong>Current Products:</strong> 
+                  {userProfile.danaPlus === 'Yes' ? ' DANA+' : ''} 
+                  {userProfile.reksadana === 'Yes' ? ' Reksadana' : ''} 
+                  {userProfile.eMAS === 'Yes' ? ' eMAS' : ''}
+                  {userProfile.danaPlus === 'No' && userProfile.reksadana === 'No' && userProfile.eMAS === 'No' ? ' None' : ''}
+                </p>
+              </div>
             </div>
           </div>
           
@@ -124,12 +121,12 @@ export function FinalPromptConfig() {
                 value={finalPrompt}
                 onChange={(e) => setFinalPrompt(e.target.value)}
                 placeholder="Configure your final prompt..."
-                className="min-h-[200px] font-mono text-sm"
+                className="min-h-[350px] font-mono text-sm"
               />
             </TabsContent>
             
             <TabsContent value="preview" className="mt-0">
-              <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md p-3 h-[200px] overflow-auto custom-scrollbar">
+              <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md p-3 h-[350px] overflow-auto custom-scrollbar">
                 <pre className="text-xs whitespace-pre-wrap font-mono text-gray-800 dark:text-gray-200">
                   {fullPromptWithContext}
                 </pre>

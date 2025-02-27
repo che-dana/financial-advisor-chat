@@ -37,14 +37,50 @@ export async function POST(request: Request) {
   Reksa Dana: ${userProfile.reksadana === 'Yes' ? 'Purchased' : 'Not Purchased'}
 `;
 
-    // Use the finalPrompt directly, replacing the user profile placeholder if it exists
-    let completePrompt = finalPrompt;
-    if (completePrompt.includes('[User profile will be inserted here]')) {
-      completePrompt = completePrompt.replace('[User profile will be inserted here]', userProfileFormatted);
-    } else {
-      // If no placeholder, append the user profile
-      completePrompt = completePrompt + "\n\n" + userProfileFormatted;
-    }
+    // Format knowledge base for the prompt
+    const knowledgeBaseFormatted = `
+## Available Investment Products:
+
+1. DANA+ (High-interest savings):
+   - Description: ${knowledgeBase.danaPlus.description}
+   - Features: ${knowledgeBase.danaPlus.features}
+   - Benefits: ${knowledgeBase.danaPlus.benefits}
+   - Target Audience: ${knowledgeBase.danaPlus.targetAudience}
+   - Risk Level: ${knowledgeBase.danaPlus.riskLevel}
+   - Minimum Investment: ${knowledgeBase.danaPlus.minimumInvestment}
+   - Return Rate: ${knowledgeBase.danaPlus.returnRate}
+   - Additional Info: ${knowledgeBase.danaPlus.additionalInfo}
+   - Historical Performance: ${knowledgeBase.danaPlus.historicalPerformance}
+
+2. Reksa Dana (Mutual Funds):
+   - Features: ${knowledgeBase.reksadana.features}
+   - Benefits: ${knowledgeBase.reksadana.benefits}
+   - Target Audience: ${knowledgeBase.reksadana.targetAudience}
+   - Risk Level: ${knowledgeBase.reksadana.riskLevel}
+   - Minimum Investment: ${knowledgeBase.reksadana.minimumInvestment}
+   - Return Rate: ${knowledgeBase.reksadana.returnRate}
+   - Additional Info: ${knowledgeBase.reksadana.additionalInfo}
+   - Historical Performance: ${knowledgeBase.reksadana.historicalPerformance}
+
+3. eMAS (Gold Investment):
+   - Description: ${knowledgeBase.eMAS.description}
+   - Features: ${knowledgeBase.eMAS.features}
+   - Benefits: ${knowledgeBase.eMAS.benefits}
+   - Target Audience: ${knowledgeBase.eMAS.targetAudience}
+   - Risk Level: ${knowledgeBase.eMAS.riskLevel}
+   - Minimum Investment: ${knowledgeBase.eMAS.minimumInvestment}
+   - Return Rate: ${knowledgeBase.eMAS.returnRate}
+   - Additional Info: ${knowledgeBase.eMAS.additionalInfo}
+   - Historical Performance: ${knowledgeBase.eMAS.historicalPerformance}
+
+## Frequently Asked Questions:
+- DANA+: ${knowledgeBase.danaPlus.faqs}
+- Reksa Dana: ${knowledgeBase.reksadana.faqs}
+- eMAS: ${knowledgeBase.eMAS.faqs}
+`;
+
+    // Combine the base prompt with user profile and knowledge base
+    const completePrompt = `${finalPrompt}\n\n${userProfileFormatted}\n\n${knowledgeBaseFormatted}`;
 
     // Call Azure OpenAI API
     const response = await fetch(`${azureConfig.apiBase}/openai/deployments/${azureConfig.deploymentName}/chat/completions?api-version=${azureConfig.apiVersion}`, {

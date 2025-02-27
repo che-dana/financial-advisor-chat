@@ -10,14 +10,8 @@ export interface PromptVersion {
   timestamp: Date;
 }
 
-// Default prompt template
+// Default prompt template - without placeholders
 const defaultPrompt = `You are Dana's AI Financial Advisor, designed to help users make informed investment decisions. Your goal is to provide personalized advice based on the user's profile and needs.
-
-## User Profile Information:
-[User profile will be inserted here]
-
-## Available Investment Products:
-[Knowledge base Product information will be inserted here]
 
 ## Guidelines:
 1. Be conversational and friendly, but professional.
@@ -96,8 +90,11 @@ export function FinalPromptProvider({ children }: { children: ReactNode }) {
 - eMAS: ${knowledgeBase.eMAS.faqs}
 `;
 
-    // Replace the placeholder in the prompt with the actual knowledge base
-    const updatedPrompt = finalPrompt.replace('[Knowledge base Product information will be inserted here]', knowledgeBaseFormatted);
+    // Create the full prompt with context
+    const userProfilePlaceholder = "## User Profile Information:\n[User profile will be automatically inserted here]";
+    
+    // Combine the base prompt with the knowledge base
+    const updatedPrompt = `${finalPrompt}\n\n${userProfilePlaceholder}\n\n${knowledgeBaseFormatted}`;
     setFullPromptWithContext(updatedPrompt);
   }, [finalPrompt, knowledgeBase]);
 

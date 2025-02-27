@@ -62,24 +62,30 @@ export function MarketingPlanGenerator() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to generate marketing plan');
+        throw new Error('Failed to get response');
       }
 
       const data = await response.json();
       
-      // Add the generated plan
-      addMarketingPlan(data.plan);
-      
-      toast({
-        title: "Marketing Plan Generated",
-        description: "Your marketing plan has been successfully created.",
-      });
+      // Add the marketing plan
+      if (data.plan) {
+        addMarketingPlan({
+          bestProducts: data.plan.bestProducts,
+          marketingTechnique: data.plan.marketingTechnique,
+          conversationStarter: data.plan.conversationStarter,
+          conversationSequence: data.plan.conversationSequence
+        });
+        
+        toast({
+          title: "Marketing Plan Generated",
+          description: "Your marketing plan has been created successfully.",
+        });
+      }
     } catch (error) {
       console.error('Error generating marketing plan:', error);
       toast({
-        title: "Generation Failed",
-        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        title: "Error",
+        description: "Failed to generate marketing plan. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -87,35 +93,16 @@ export function MarketingPlanGenerator() {
     }
   };
 
-  const determineProducts = () => {
-    if (marketingPlans.length === 0 || !marketingPlans[0].bestProducts) {
-      return ['No products selected'];
+  // Helper functions to format user profile data for display
+  const formatHousingStatus = () => {
+    switch (userProfile.housingStatus) {
+      case 'Renting': return 'Renter';
+      case 'Own House': return 'Homeowner';
+      case 'Living with Family': return 'Living with family';
+      default: return userProfile.housingStatus;
     }
-    return marketingPlans[0].bestProducts;
   };
 
-  const determineTechnique = () => {
-    if (marketingPlans.length === 0 || !marketingPlans[0].marketingTechnique) {
-      return 'No technique specified';
-    }
-    return marketingPlans[0].marketingTechnique;
-  };
-
-  const generateConversationStarter = () => {
-    if (marketingPlans.length === 0 || !marketingPlans[0].conversationStarter) {
-      return 'No conversation starter specified';
-    }
-    return marketingPlans[0].conversationStarter;
-  };
-
-  const generateSequence = () => {
-    if (marketingPlans.length === 0 || !marketingPlans[0].conversationSequence) {
-      return ['No sequence specified'];
-    }
-    return marketingPlans[0].conversationSequence;
-  };
-
-  // Format the family dependents display
   const formatFamilyDependents = () => {
     if (userProfile.familyDependants === 0) {
       return 'No dependents';
@@ -126,17 +113,6 @@ export function MarketingPlanGenerator() {
     }
   };
 
-  // Format the housing status for display
-  const formatHousingStatus = () => {
-    switch (userProfile.housingStatus) {
-      case 'Renting': return 'Renter';
-      case 'Own House': return 'Homeowner';
-      case 'Living with Family': return 'Living with family';
-      default: return userProfile.housingStatus;
-    }
-  };
-
-  // Format the vehicle ownership for display
   const formatVehicleOwnership = () => {
     switch (userProfile.vehicleOwnership) {
       case 'None': return 'No vehicle';
@@ -146,10 +122,9 @@ export function MarketingPlanGenerator() {
     }
   };
 
-  // Format the work nature for display
   const formatWorkNature = () => {
     switch (userProfile.workNature) {
-      case 'Salaried': return 'Employee';
+      case 'Salaried': return 'Salaried employee';
       case 'Self-employed': return 'Self-employed';
       case 'Freelancer': return 'Freelancer';
       case 'Retired': return 'Retired';
@@ -157,35 +132,51 @@ export function MarketingPlanGenerator() {
     }
   };
 
+  // Helper functions to extract data from the latest marketing plan
+  const determineProducts = () => {
+    return marketingPlans.length > 0 ? marketingPlans[0].bestProducts : [];
+  };
+
+  const determineTechnique = () => {
+    return marketingPlans.length > 0 ? marketingPlans[0].marketingTechnique : '';
+  };
+
+  const generateConversationStarter = () => {
+    return marketingPlans.length > 0 ? marketingPlans[0].conversationStarter : '';
+  };
+
+  const generateSequence = () => {
+    return marketingPlans.length > 0 ? marketingPlans[0].conversationSequence : [];
+  };
+
   return (
-    <Card>
-      <CardHeader className="py-3 cursor-pointer flex flex-row items-center justify-between" onClick={() => setIsCollapsed(!isCollapsed)}>
-        <CardTitle>Marketing Plan Generator</CardTitle>
-        {isCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+    <Card className="h-full flex flex-col shadow-md">
+      <CardHeader 
+        className="py-3 cursor-pointer flex flex-row items-center justify-between"
+        onClick={() => setIsCollapsed(!isCollapsed)}
+      >
+        <CardTitle className="text-lg">Marketing Plan Generator</CardTitle>
+        {isCollapsed ? <ChevronDown className="h-5 w-5" /> : <ChevronUp className="h-5 w-5" />}
       </CardHeader>
       
       {!isCollapsed && (
-        <CardContent className="space-y-4">
-          <div className="mb-4 p-3 bg-muted rounded-md">
-            <h3 className="text-sm font-medium mb-2">Current User Profile:</h3>
-            <div className="text-xs space-y-1">
-              <p><strong>Personality:</strong> 
-                Openness: {userProfile.openness}, 
-                Conscientiousness: {userProfile.conscientiousness}, 
-                Extraversion: {userProfile.extraversion}, 
-                Agreeableness: {userProfile.agreeableness}, 
-                Neuroticism: {userProfile.neuroticism}
-              </p>
-              <p><strong>Demographics:</strong> {userProfile.age} years old, {userProfile.educationLevel} education, {userProfile.incomeLevel} income</p>
-              <p><strong>Living Situation:</strong> {formatHousingStatus()}, {formatVehicleOwnership()}</p>
-              <p><strong>Work & Family:</strong> {formatWorkNature()}, {formatFamilyDependents()}</p>
-              <p><strong>Financial Behavior:</strong> {userProfile.behavioralTrait}</p>
-              <p><strong>Current Products:</strong> 
-                {userProfile.danaPlus === 'Yes' ? ' DANA+' : ''} 
-                {userProfile.reksadana === 'Yes' ? ' Reksadana' : ''} 
-                {userProfile.eMAS === 'Yes' ? ' eMAS' : ''}
-                {userProfile.danaPlus === 'No' && userProfile.reksadana === 'No' && userProfile.eMAS === 'No' ? ' None' : ''}
-              </p>
+        <CardContent className="space-y-4 flex-grow overflow-auto">
+          <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md text-xs">
+            <div className="flex items-start gap-2">
+              <div>
+                <p className="font-medium mb-1">Current User Profile</p>
+                <p><strong>Personality:</strong> Openness ({userProfile.openness}), Conscientiousness ({userProfile.conscientiousness}), Extraversion ({userProfile.extraversion}), Agreeableness ({userProfile.agreeableness}), Neuroticism ({userProfile.neuroticism})</p>
+                <p><strong>Demographics:</strong> {userProfile.age} years old, {userProfile.educationLevel} education, {userProfile.incomeLevel} income</p>
+                <p><strong>Living Situation:</strong> {formatHousingStatus()}, {formatVehicleOwnership()}</p>
+                <p><strong>Work & Family:</strong> {formatWorkNature()}, {formatFamilyDependents()}</p>
+                <p><strong>Financial Behavior:</strong> {userProfile.behavioralTrait}</p>
+                <p><strong>Current Products:</strong> 
+                  {userProfile.danaPlus === 'Yes' ? ' DANA+' : ''} 
+                  {userProfile.reksadana === 'Yes' ? ' Reksadana' : ''} 
+                  {userProfile.eMAS === 'Yes' ? ' eMAS' : ''}
+                  {userProfile.danaPlus === 'No' && userProfile.reksadana === 'No' && userProfile.eMAS === 'No' ? ' None' : ''}
+                </p>
+              </div>
             </div>
           </div>
           
@@ -193,7 +184,7 @@ export function MarketingPlanGenerator() {
             value={currentPrompt}
             onChange={(e) => setCurrentPrompt(e.target.value)}
             placeholder="Enter your marketing prompt..."
-            className="min-h-[100px]"
+            className="min-h-[350px] font-mono text-sm"
           />
           
           <Button 

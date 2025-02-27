@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { UserProfile } from '@/contexts/UserProfileContext';
+import { KnowledgeBase } from '@/contexts/KnowledgeBaseContext';
 
 // Azure OpenAI configuration
 const azureConfig = {
@@ -36,14 +37,51 @@ User Profile:
   Reksa Dana: ${userProfile.investmentStatus.reksadana === 'Yes' ? 'Purchased' : 'Not Purchased'}
 `;
 
+    // Format knowledge base for the prompt
+    const knowledgeBaseFormatted = `
+## Available Investment Products:
+
+1. DANA+ (High-interest savings):
+   - Description: ${knowledgeBase.danaPlus.description}
+   - Features: ${knowledgeBase.danaPlus.features}
+   - Benefits: ${knowledgeBase.danaPlus.benefits}
+   - Target Audience: ${knowledgeBase.danaPlus.targetAudience}
+   - Risk Level: ${knowledgeBase.danaPlus.riskLevel}
+   - Minimum Investment: ${knowledgeBase.danaPlus.minimumInvestment}
+   - Return Rate: ${knowledgeBase.danaPlus.returnRate}
+   - Additional Info: ${knowledgeBase.danaPlus.additionalInfo}
+   - Historical Performance: ${knowledgeBase.danaPlus.historicalPerformance}
+
+2. Reksa Dana (Mutual Funds):
+   - Description: ${knowledgeBase.reksadana.description}
+   - Features: ${knowledgeBase.reksadana.features}
+   - Benefits: ${knowledgeBase.reksadana.benefits}
+   - Target Audience: ${knowledgeBase.reksadana.targetAudience}
+   - Risk Level: ${knowledgeBase.reksadana.riskLevel}
+   - Minimum Investment: ${knowledgeBase.reksadana.minimumInvestment}
+   - Return Rate: ${knowledgeBase.reksadana.returnRate}
+   - Additional Info: ${knowledgeBase.reksadana.additionalInfo}
+   - Historical Performance: ${knowledgeBase.reksadana.historicalPerformance}
+
+3. eMAS (Gold Investment):
+   - Description: ${knowledgeBase.eMAS.description}
+   - Features: ${knowledgeBase.eMAS.features}
+   - Benefits: ${knowledgeBase.eMAS.benefits}
+   - Target Audience: ${knowledgeBase.eMAS.targetAudience}
+   - Risk Level: ${knowledgeBase.eMAS.riskLevel}
+   - Minimum Investment: ${knowledgeBase.eMAS.minimumInvestment}
+   - Return Rate: ${knowledgeBase.eMAS.returnRate}
+   - Additional Info: ${knowledgeBase.eMAS.additionalInfo}
+   - Historical Performance: ${knowledgeBase.eMAS.historicalPerformance}
+`;
+
     // Construct the full prompt with context
     const fullPrompt = `
 ${prompt}
 
 ${userProfileFormatted}
 
-Knowledge Base Context:
-${JSON.stringify(knowledgeBase, null, 2)}
+${knowledgeBaseFormatted}
 `;
 
     // Call Azure OpenAI API
@@ -66,19 +104,15 @@ ${JSON.stringify(knowledgeBase, null, 2)}
     if (!response.ok) {
       const errorData = await response.json();
       console.error('Azure OpenAI API error:', errorData);
-      return NextResponse.json({ error: 'Failed to generate marketing plan' }, { status: 500 });
+      return NextResponse.json({ error: 'Failed to get marketing plan' }, { status: 500 });
     }
 
     const data = await response.json();
+    const aiResponse = data.choices[0].message.content;
     
-    // Extract and parse the JSON response
     try {
-      const content = data.choices[0].message.content;
-      // Find JSON in the response (in case there's additional text)
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      const jsonString = jsonMatch ? jsonMatch[0] : content;
-      const plan = JSON.parse(jsonString);
-      
+      // Parse the JSON response
+      const plan = JSON.parse(aiResponse);
       return NextResponse.json({ plan });
     } catch (parseError) {
       console.error('Error parsing AI response:', parseError);
