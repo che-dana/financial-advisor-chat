@@ -1,40 +1,99 @@
 import { NextResponse } from 'next/server';
+import { UserProfile } from '@/contexts/UserProfileContext';
+import { KnowledgeBase } from '@/contexts/KnowledgeBaseContext';
+
+// Azure OpenAI configuration
+const azureConfig = {
+  apiBase: "https://dana-automation-copilot-ncus.openai.azure.com/",
+  deploymentName: "gpt-4o",
+  apiKey: "d636779ca07d47a0a9460d14972766a7",
+  apiVersion: "2023-05-15",
+  apiType: "azure"
+};
 
 export async function POST(request: Request) {
   try {
     const { message, userProfile, knowledgeBase, finalPrompt } = await request.json();
 
-    // In a real implementation, this would call an AI service like OpenAI
-    // For now, we'll simulate a response
-    
-    // Simulate processing time
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Generate a simple response based on the user profile and message
-    let response = '';
-    
-    if (message.toLowerCase().includes('investment')) {
-      if (userProfile.riskTolerance === 'Low') {
-        response = `Based on your conservative risk profile, I'd recommend considering DANA+ as a starting point. It offers a stable return with minimal risk. Would you like to know more about its features?`;
-      } else if (userProfile.incomeLevel === 'High') {
-        response = `With your income level, you might be interested in our Reksa Dana products which can offer higher returns. Have you considered diversifying your investment portfolio?`;
-      } else {
-        response = `eMAS could be a good option for you. It's a digital gold investment that provides protection against inflation. Would you like to learn more about how it works?`;
-      }
-    } else if (message.toLowerCase().includes('saving')) {
-      response = `Saving is a great habit! DANA+ offers competitive interest rates compared to traditional savings accounts. You can start with as little as Rp 10,000.`;
-    } else if (message.toLowerCase().includes('hello') || message.toLowerCase().includes('hi')) {
-      response = `Hello! I'm your Dana financial advisor. I can help you find the right investment products based on your needs and profile. What would you like to know about today?`;
-    } else {
-      response = `Thank you for your message. Based on your profile, I see you might be interested in ${userProfile.behavioralTrait === 'Investor' ? 'our Reksa Dana products' : 'our DANA+ savings product'}. Would you like to know more about these options?`;
+    // Format the user profile for the prompt
+    const userProfileFormatted = `
+User Profile:
+- Big 5 Personality: Openness (${userProfile.openness}), 
+  Conscientiousness (${userProfile.conscientiousness}), 
+  Extraversion (${userProfile.extraversion}), 
+  Agreeableness (${userProfile.agreeableness}), 
+  Neuroticism (${userProfile.neuroticism})
+- Education Level: ${userProfile.educationLevel}
+- Income Level: ${userProfile.incomeLevel}
+- Housing Status: ${userProfile.housingStatus}
+- Vehicle Ownership: ${userProfile.vehicleOwnership}
+- Nature of Work: ${userProfile.workNature}
+- Family Dependents: ${userProfile.familyDependants}
+- Age: ${userProfile.age}
+- Behavioral Trait: ${userProfile.behavioralTrait}
+- Investment Purchase Status: 
+  Dana+: ${userProfile.danaPlus === 'Yes' ? 'Purchased' : 'Not Purchased'}
+  Emas: ${userProfile.eMAS === 'Yes' ? 'Purchased' : 'Not Purchased'}
+  Reksa Dana: ${userProfile.reksadana === 'Yes' ? 'Purchased' : 'Not Purchased'}
+`;
+
+    // Format knowledge base for the prompt
+    const knowledgeBaseFormatted = `
+Product Information:
+1. DANA+:
+   - Description: ${knowledgeBase.danaPlus.description}
+   - Features: ${knowledgeBase.danaPlus.features}
+   - Benefits: ${knowledgeBase.danaPlus.benefits}
+   - Minimum Investment: ${knowledgeBase.danaPlus.minimumInvestment}
+   - Return Rate: ${knowledgeBase.danaPlus.returnRate}
+   - Risk Level: ${knowledgeBase.danaPlus.riskLevel}
+
+2. Reksa Dana:
+   - Description: ${knowledgeBase.reksadana.description}
+   - Features: ${knowledgeBase.reksadana.features}
+   - Benefits: ${knowledgeBase.reksadana.benefits}
+   - Minimum Investment: ${knowledgeBase.reksadana.minimumInvestment}
+   - Return Rate: ${knowledgeBase.reksadana.returnRate}
+   - Risk Level: ${knowledgeBase.reksadana.riskLevel}
+
+3. eMAS:
+   - Description: ${knowledgeBase.eMAS.description}
+   - Features: ${knowledgeBase.eMAS.features}
+   - Benefits: ${knowledgeBase.eMAS.benefits}
+   - Minimum Investment: ${knowledgeBase.eMAS.minimumInvestment}
+   - Return Rate: ${knowledgeBase.eMAS.returnRate}
+   - Risk Level: ${knowledgeBase.eMAS.riskLevel}
+`;
+
+    // Call Azure OpenAI API
+    const response = await fetch(`${azureConfig.apiBase}/openai/deployments/${azureConfig.deploymentName}/chat/completions?api-version=${azureConfig.apiVersion}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'api-key': azureConfig.apiKey
+      },
+      body: JSON.stringify({
+        messages: [
+          { role: "system", content: finalPrompt + "\n\n" + userProfileFormatted + "\n\n" + knowledgeBaseFormatted },
+          { role: "user", content: message }
+        ],
+        temperature: 0.7,
+        max_tokens: 800
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Azure OpenAI API error:', errorData);
+      return NextResponse.json({ error: 'Failed to get chat response' }, { status: 500 });
     }
+
+    const data = await response.json();
+    const aiResponse = data.choices[0].message.content;
     
-    return NextResponse.json({ response });
+    return NextResponse.json({ response: aiResponse });
   } catch (error) {
     console.error('Error in chat API:', error);
-    return NextResponse.json(
-      { error: 'Failed to process chat message' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 } 
