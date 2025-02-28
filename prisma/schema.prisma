@@ -1,0 +1,83 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  password      String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  sessions      Session[]
+  userProfiles  UserProfile[]
+  marketingPrompts MarketingPrompt[]
+  finalPrompts  FinalPrompt[]
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserProfile {
+  id                String   @id @default(cuid())
+  userId            String
+  openness          String   @default("Medium")
+  conscientiousness String   @default("Medium")
+  extraversion      String   @default("Medium")
+  agreeableness     String   @default("Medium")
+  neuroticism       String   @default("Medium")
+  age               Int      @default(30)
+  educationLevel    String   @default("Undergraduate")
+  incomeLevel       String   @default("Medium")
+  housingStatus     String   @default("Renting")
+  vehicleOwnership  String   @default("None")
+  workNature        String   @default("Salaried")
+  familyDependants  Int      @default(0)
+  behavioralTrait   String   @default("Balanced")
+  danaPlus          String   @default("No")
+  reksadana         String   @default("No")
+  eMAS              String   @default("No")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model MarketingPrompt {
+  id                  String   @id @default(cuid())
+  userId              String
+  prompt              String   @db.Text
+  bestProducts        String?  @db.Text
+  marketingTechnique  String?  @db.Text
+  conversationStarter String?  @db.Text
+  conversationSequence String? @db.Text
+  isActive            Boolean  @default(false)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model FinalPrompt {
+  id            String   @id @default(cuid())
+  userId        String
+  name          String?
+  prompt        String   @db.Text
+  isActive      Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+} 

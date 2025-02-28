@@ -131,19 +131,19 @@ export function MarketingPlanProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const loadSavedData = async () => {
       try {
-        // Load marketing plans
-        const plansResponse = await fetch('/api/marketing-plans');
-        if (plansResponse.ok) {
-          const plansData = await plansResponse.json();
-          setMarketingPlans(plansData.plans || []);
-        }
-        
-        // Load marketing prompt
-        const promptResponse = await fetch('/api/marketing-prompt');
-        if (promptResponse.ok) {
-          const promptData = await promptResponse.json();
-          if (promptData.prompt) {
-            setCurrentPrompt(promptData.prompt);
+        // Load marketing prompts
+        const response = await fetch('/api/marketing-prompts');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.prompts && data.prompts.length > 0) {
+            // Find the active prompt or use the most recent one
+            const activePrompt = data.prompts.find((p: any) => p.isActive) || data.prompts[0];
+            setMarketingPlans([activePrompt]);
+            
+            // Set the prompt text
+            if (activePrompt.prompt) {
+              setCurrentPrompt(activePrompt.prompt);
+            }
           }
         }
       } catch (error) {
@@ -162,20 +162,39 @@ export function MarketingPlanProvider({ children }: { children: ReactNode }) {
       if (isLoading) return; // Don't save during initial load
       
       try {
-        await fetch('/api/marketing-prompt', {
+        console.log('Saving marketing prompt to database...');
+        
+        // Get the latest marketing plan if available
+        const latestPlan = marketingPlans.length > 0 ? marketingPlans[0] : null;
+        
+        const response = await fetch('/api/marketing-prompts', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ prompt: currentPrompt }),
+          body: JSON.stringify({ 
+            prompt: currentPrompt,
+            bestProducts: latestPlan?.bestProducts ? JSON.stringify(latestPlan.bestProducts) : null,
+            marketingTechnique: latestPlan?.marketingTechnique || null,
+            conversationStarter: latestPlan?.conversationStarter || null,
+            conversationSequence: latestPlan?.conversationSequence ? JSON.stringify(latestPlan.conversationSequence) : null,
+            isActive: true 
+          }),
         });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('Failed to save marketing prompt:', errorData);
+        } else {
+          console.log('Marketing prompt saved successfully');
+        }
       } catch (error) {
-        console.error('Failed to save marketing prompt:', error);
+        console.error('Error saving marketing prompt:', error);
       }
     };
 
     savePrompt();
-  }, [currentPrompt, isLoading]);
+  }, [currentPrompt, isLoading, marketingPlans]);
 
   const addMarketingPlan = (plan: MarketingPlan) => {
     setMarketingPlans([plan, ...marketingPlans]);

@@ -1,329 +1,428 @@
 "use client"
 
-import React, { useState } from 'react';
-import { Slider } from '@/components/ui/slider';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useEffect } from 'react';
 import { useUserProfile } from '@/contexts/UserProfileContext';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
+import { ChevronDown, ChevronUp } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
 
 export function UserProfileSidebar() {
   const { userProfile, updateUserProfile } = useUserProfile();
-  const [expandedSections, setExpandedSections] = useState({
-    personalityTraits: false,
-    demographics: false,
-    investmentStatus: false
-  });
-
-  const toggleSection = (section: 'personalityTraits' | 'demographics' | 'investmentStatus') => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [section]: !prev[section]
-    }));
+  const { toast } = useToast();
+  
+  // Personality traits section
+  const [personalityOpen, setPersonalityOpen] = useState(false);
+  const [openness, setOpenness] = useState(userProfile?.openness || 'Medium');
+  const [conscientiousness, setConscientiousness] = useState(userProfile?.conscientiousness || 'Medium');
+  const [extraversion, setExtraversion] = useState(userProfile?.extraversion || 'Medium');
+  const [agreeableness, setAgreeableness] = useState(userProfile?.agreeableness || 'Medium');
+  const [neuroticism, setNeuroticism] = useState(userProfile?.neuroticism || 'Medium');
+  
+  // Demographics section
+  const [demographicsOpen, setDemographicsOpen] = useState(false);
+  const [age, setAge] = useState(userProfile?.age || 30);
+  const [educationLevel, setEducationLevel] = useState(userProfile?.educationLevel || 'Undergraduate');
+  const [incomeLevel, setIncomeLevel] = useState(userProfile?.incomeLevel || 'Medium');
+  const [housingStatus, setHousingStatus] = useState(userProfile?.housingStatus || 'Renting');
+  const [vehicleOwnership, setVehicleOwnership] = useState(userProfile?.vehicleOwnership || 'None');
+  const [workNature, setWorkNature] = useState(userProfile?.workNature || 'Salaried');
+  const [familyDependants, setFamilyDependants] = useState(userProfile?.familyDependants || 0);
+  const [behavioralTrait, setBehavioralTrait] = useState(userProfile?.behavioralTrait || 'Balanced');
+  
+  // Investments section
+  const [investmentsOpen, setInvestmentsOpen] = useState(false);
+  const [danaPlus, setDanaPlus] = useState(userProfile?.danaPlus === 'Yes');
+  const [reksadana, setReksadana] = useState(userProfile?.reksadana === 'Yes');
+  const [eMAS, setEMAS] = useState(userProfile?.eMAS === 'Yes');
+  
+  // Update state when userProfile changes
+  useEffect(() => {
+    if (userProfile) {
+      setOpenness(userProfile.openness || 'Medium');
+      setConscientiousness(userProfile.conscientiousness || 'Medium');
+      setExtraversion(userProfile.extraversion || 'Medium');
+      setAgreeableness(userProfile.agreeableness || 'Medium');
+      setNeuroticism(userProfile.neuroticism || 'Medium');
+      
+      setAge(userProfile.age || 30);
+      setEducationLevel(userProfile.educationLevel || 'Undergraduate');
+      setIncomeLevel(userProfile.incomeLevel || 'Medium');
+      setHousingStatus(userProfile.housingStatus || 'Renting');
+      setVehicleOwnership(userProfile.vehicleOwnership || 'None');
+      setWorkNature(userProfile.workNature || 'Salaried');
+      setFamilyDependants(userProfile.familyDependants || 0);
+      setBehavioralTrait(userProfile.behavioralTrait || 'Balanced');
+      
+      setDanaPlus(userProfile.danaPlus === 'Yes');
+      setReksadana(userProfile.reksadana === 'Yes');
+      setEMAS(userProfile.eMAS === 'Yes');
+    }
+  }, [userProfile]);
+  
+  // Save personality traits
+  const savePersonality = async () => {
+    try {
+      await updateUserProfile({
+        openness,
+        conscientiousness,
+        extraversion,
+        agreeableness,
+        neuroticism
+      });
+      
+      toast({
+        title: "Personality Saved",
+        description: "Your personality traits have been updated.",
+      });
+    } catch (error) {
+      console.error('Error saving personality:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save personality traits.",
+        variant: "destructive",
+      });
+    }
   };
-
+  
+  // Save demographics
+  const saveDemographics = async () => {
+    try {
+      await updateUserProfile({
+        age,
+        educationLevel,
+        incomeLevel,
+        housingStatus,
+        vehicleOwnership,
+        workNature,
+        familyDependants,
+        behavioralTrait
+      });
+      
+      toast({
+        title: "Demographics Saved",
+        description: "Your demographic information has been updated.",
+      });
+    } catch (error) {
+      console.error('Error saving demographics:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save demographic information.",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  // Save investments
+  const saveInvestments = async () => {
+    try {
+      await updateUserProfile({
+        danaPlus: danaPlus ? 'Yes' : 'No',
+        reksadana: reksadana ? 'Yes' : 'No',
+        eMAS: eMAS ? 'Yes' : 'No'
+      });
+      
+      toast({
+        title: "Investments Saved",
+        description: "Your investment products have been updated.",
+      });
+    } catch (error) {
+      console.error('Error saving investments:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save investment products.",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  if (!userProfile) {
+    return <div className="p-4 text-sm text-gray-500">Loading user profile...</div>;
+  }
+  
   return (
-    <div className="space-y-4 p-4">
-      {/* Personality Traits */}
-      <Card>
-        <CardHeader 
-          className="py-3 cursor-pointer flex flex-row items-center justify-between"
-          onClick={() => toggleSection('personalityTraits')}
-        >
-          <CardTitle className="text-sm">Personality Traits</CardTitle>
-          {expandedSections.personalityTraits ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-        </CardHeader>
-        {expandedSections.personalityTraits && (
-          <CardContent className="space-y-4 pt-0">
-            <div className="space-y-2">
-              <Label htmlFor="openness">Openness</Label>
-              <Select 
-                value={userProfile.openness} 
-                onValueChange={(value) => updateUserProfile({ openness: value as 'High' | 'Low' })}
-              >
-                <SelectTrigger id="openness">
-                  <SelectValue placeholder="Select level" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="High">High</SelectItem>
-                  <SelectItem value="Low">Low</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="conscientiousness">Conscientiousness</Label>
-              <Select 
-                value={userProfile.conscientiousness} 
-                onValueChange={(value) => updateUserProfile({ conscientiousness: value as 'High' | 'Low' })}
-              >
-                <SelectTrigger id="conscientiousness">
-                  <SelectValue placeholder="Select level" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="High">High</SelectItem>
-                  <SelectItem value="Low">Low</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="extraversion">Extraversion</Label>
-              <Select 
-                value={userProfile.extraversion} 
-                onValueChange={(value) => updateUserProfile({ extraversion: value as 'High' | 'Low' })}
-              >
-                <SelectTrigger id="extraversion">
-                  <SelectValue placeholder="Select level" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="High">High</SelectItem>
-                  <SelectItem value="Low">Low</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="agreeableness">Agreeableness</Label>
-              <Select 
-                value={userProfile.agreeableness} 
-                onValueChange={(value) => updateUserProfile({ agreeableness: value as 'High' | 'Low' })}
-              >
-                <SelectTrigger id="agreeableness">
-                  <SelectValue placeholder="Select level" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="High">High</SelectItem>
-                  <SelectItem value="Low">Low</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="neuroticism">Neuroticism</Label>
-              <Select 
-                value={userProfile.neuroticism} 
-                onValueChange={(value) => updateUserProfile({ neuroticism: value as 'High' | 'Low' })}
-              >
-                <SelectTrigger id="neuroticism">
-                  <SelectValue placeholder="Select level" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="High">High</SelectItem>
-                  <SelectItem value="Low">Low</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        )}
-      </Card>
+    <div className="p-3 space-y-3">
+      {/* Personality Traits Section */}
+      <Collapsible 
+        open={personalityOpen} 
+        onOpenChange={setPersonalityOpen}
+        className="border rounded-md overflow-hidden"
+      >
+        <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+          <span className="font-medium">Personality Traits</span>
+          {personalityOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+        </CollapsibleTrigger>
+        <CollapsibleContent className="p-3 space-y-3">
+          <div className="space-y-2">
+            <Label htmlFor="openness">Openness</Label>
+            <Select value={openness} onValueChange={setOpenness}>
+              <SelectTrigger id="openness">
+                <SelectValue placeholder="Select level" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Low">Low</SelectItem>
+                <SelectItem value="Medium">Medium</SelectItem>
+                <SelectItem value="High">High</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="conscientiousness">Conscientiousness</Label>
+            <Select value={conscientiousness} onValueChange={setConscientiousness}>
+              <SelectTrigger id="conscientiousness">
+                <SelectValue placeholder="Select level" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Low">Low</SelectItem>
+                <SelectItem value="Medium">Medium</SelectItem>
+                <SelectItem value="High">High</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="extraversion">Extraversion</Label>
+            <Select value={extraversion} onValueChange={setExtraversion}>
+              <SelectTrigger id="extraversion">
+                <SelectValue placeholder="Select level" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Low">Low</SelectItem>
+                <SelectItem value="Medium">Medium</SelectItem>
+                <SelectItem value="High">High</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="agreeableness">Agreeableness</Label>
+            <Select value={agreeableness} onValueChange={setAgreeableness}>
+              <SelectTrigger id="agreeableness">
+                <SelectValue placeholder="Select level" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Low">Low</SelectItem>
+                <SelectItem value="Medium">Medium</SelectItem>
+                <SelectItem value="High">High</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="neuroticism">Neuroticism</Label>
+            <Select value={neuroticism} onValueChange={setNeuroticism}>
+              <SelectTrigger id="neuroticism">
+                <SelectValue placeholder="Select level" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Low">Low</SelectItem>
+                <SelectItem value="Medium">Medium</SelectItem>
+                <SelectItem value="High">High</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="flex justify-end pt-2">
+            <Button onClick={savePersonality} size="sm">Save</Button>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
       
-      {/* Demographics & Financial Status */}
-      <Card>
-        <CardHeader 
-          className="py-3 cursor-pointer flex flex-row items-center justify-between"
-          onClick={() => toggleSection('demographics')}
-        >
-          <CardTitle className="text-sm">Demographics & Financial Status</CardTitle>
-          {expandedSections.demographics ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-        </CardHeader>
-        {expandedSections.demographics && (
-          <CardContent className="space-y-4 pt-0">
-            <div className="space-y-2">
-              <Label htmlFor="educationLevel">Education Level</Label>
-              <Select 
-                value={userProfile.educationLevel} 
-                onValueChange={(value) => updateUserProfile({ educationLevel: value as any })}
-              >
-                <SelectTrigger id="educationLevel">
-                  <SelectValue placeholder="Select level" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="High School">High School</SelectItem>
-                  <SelectItem value="Bachelor's">Bachelor's</SelectItem>
-                  <SelectItem value="Master's">Master's</SelectItem>
-                  <SelectItem value="PhD">PhD</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="incomeLevel">Income Level</Label>
-              <Select 
-                value={userProfile.incomeLevel} 
-                onValueChange={(value) => updateUserProfile({ incomeLevel: value as any })}
-              >
-                <SelectTrigger id="incomeLevel">
-                  <SelectValue placeholder="Select level" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Low">Low</SelectItem>
-                  <SelectItem value="Medium">Medium</SelectItem>
-                  <SelectItem value="High">High</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="housingStatus">Housing Status</Label>
-              <Select 
-                value={userProfile.housingStatus} 
-                onValueChange={(value) => updateUserProfile({ housingStatus: value as any })}
-              >
-                <SelectTrigger id="housingStatus">
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Renting">Renting</SelectItem>
-                  <SelectItem value="Own House">Own House</SelectItem>
-                  <SelectItem value="Living with Family">Living with Family</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="vehicleOwnership">Vehicle Ownership</Label>
-              <Select 
-                value={userProfile.vehicleOwnership} 
-                onValueChange={(value) => updateUserProfile({ vehicleOwnership: value as any })}
-              >
-                <SelectTrigger id="vehicleOwnership">
-                  <SelectValue placeholder="Select ownership" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="None">None</SelectItem>
-                  <SelectItem value="Car">Car</SelectItem>
-                  <SelectItem value="Motorcycle">Motorcycle</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="workNature">Nature of Work</Label>
-              <Select 
-                value={userProfile.workNature} 
-                onValueChange={(value) => updateUserProfile({ workNature: value as any })}
-              >
-                <SelectTrigger id="workNature">
-                  <SelectValue placeholder="Select work nature" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Salaried">Salaried</SelectItem>
-                  <SelectItem value="Self-employed">Self-employed</SelectItem>
-                  <SelectItem value="Freelancer">Freelancer</SelectItem>
-                  <SelectItem value="Retired">Retired</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="familyDependants">Family Dependants</Label>
-              <Slider
-                id="familyDependants"
-                min={0}
-                max={10}
-                step={1}
-                value={[userProfile.familyDependants]}
-                onValueChange={(value) => updateUserProfile({ familyDependants: value[0] })}
-              />
-              <div className="text-center mt-1">{userProfile.familyDependants}</div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="age">Age</Label>
-              <Slider
-                id="age"
-                min={18}
-                max={100}
-                step={1}
-                value={[userProfile.age]}
-                onValueChange={(value) => updateUserProfile({ age: value[0] })}
-              />
-              <div className="text-center mt-1">{userProfile.age}</div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="behavioralTrait">Behavioral Trait</Label>
-              <Select 
-                value={userProfile.behavioralTrait} 
-                onValueChange={(value) => updateUserProfile({ behavioralTrait: value as any })}
-              >
-                <SelectTrigger id="behavioralTrait">
-                  <SelectValue placeholder="Select trait" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Saver">Saver</SelectItem>
-                  <SelectItem value="Spender">Spender</SelectItem>
-                  <SelectItem value="Investor">Investor</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        )}
-      </Card>
+      {/* Demographics Section */}
+      <Collapsible 
+        open={demographicsOpen} 
+        onOpenChange={setDemographicsOpen}
+        className="border rounded-md overflow-hidden"
+      >
+        <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+          <span className="font-medium">Demographics</span>
+          {demographicsOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+        </CollapsibleTrigger>
+        <CollapsibleContent className="p-3 space-y-3">
+          <div className="space-y-2">
+            <Label htmlFor="age">Age</Label>
+            <Input 
+              id="age" 
+              type="number" 
+              value={age} 
+              onChange={(e) => setAge(parseInt(e.target.value) || 0)} 
+              min={18} 
+              max={100} 
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="educationLevel">Education Level</Label>
+            <Select value={educationLevel} onValueChange={setEducationLevel}>
+              <SelectTrigger id="educationLevel">
+                <SelectValue placeholder="Select level" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="High School">High School</SelectItem>
+                <SelectItem value="Undergraduate">Undergraduate</SelectItem>
+                <SelectItem value="Postgraduate">Postgraduate</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="incomeLevel">Income Level</Label>
+            <Select value={incomeLevel} onValueChange={setIncomeLevel}>
+              <SelectTrigger id="incomeLevel">
+                <SelectValue placeholder="Select level" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Low">Low</SelectItem>
+                <SelectItem value="Medium">Medium</SelectItem>
+                <SelectItem value="High">High</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="housingStatus">Housing Status</Label>
+            <Select value={housingStatus} onValueChange={setHousingStatus}>
+              <SelectTrigger id="housingStatus">
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Renting">Renting</SelectItem>
+                <SelectItem value="Own House">Own House</SelectItem>
+                <SelectItem value="Living with Family">Living with Family</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="vehicleOwnership">Vehicle Ownership</Label>
+            <Select value={vehicleOwnership} onValueChange={setVehicleOwnership}>
+              <SelectTrigger id="vehicleOwnership">
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="None">No Car</SelectItem>
+                <SelectItem value="Car">Owns a Car</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="workNature">Nature of Work</Label>
+            <Select value={workNature} onValueChange={setWorkNature}>
+              <SelectTrigger id="workNature">
+                <SelectValue placeholder="Select type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Salaried">Salaried Employee</SelectItem>
+                <SelectItem value="Freelancer">Freelancer</SelectItem>
+                <SelectItem value="Entrepreneur">Entrepreneur</SelectItem>
+                <SelectItem value="Gig Worker">Gig Worker</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="familyDependants">Family Dependants</Label>
+            <Input 
+              id="familyDependants" 
+              type="number" 
+              value={familyDependants} 
+              onChange={(e) => setFamilyDependants(parseInt(e.target.value) || 0)} 
+              min={0} 
+              max={10} 
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label>Behavioral Trait</Label>
+            <RadioGroup value={behavioralTrait} onValueChange={setBehavioralTrait} className="space-y-1">
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Spender" id="spender" />
+                <Label htmlFor="spender">Spender</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Saver" id="saver" />
+                <Label htmlFor="saver">Saver</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Risk-taker" id="risk-taker" />
+                <Label htmlFor="risk-taker">Risk-taker</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Risk-averse" id="risk-averse" />
+                <Label htmlFor="risk-averse">Risk-averse</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Balanced" id="balanced" />
+                <Label htmlFor="balanced">Balanced</Label>
+              </div>
+            </RadioGroup>
+          </div>
+          
+          <div className="flex justify-end pt-2">
+            <Button onClick={saveDemographics} size="sm">Save</Button>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
       
-      {/* Investment Product Status */}
-      <Card>
-        <CardHeader 
-          className="py-3 cursor-pointer flex flex-row items-center justify-between"
-          onClick={() => toggleSection('investmentStatus')}
-        >
-          <CardTitle className="text-sm">Investment Product Status</CardTitle>
-          {expandedSections.investmentStatus ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-        </CardHeader>
-        {expandedSections.investmentStatus && (
-          <CardContent className="space-y-4 pt-0">
-            <div className="space-y-2">
-              <Label htmlFor="danaPlus">DANA+</Label>
-              <Select 
-                value={userProfile.danaPlus} 
-                onValueChange={(value) => updateUserProfile({ danaPlus: value as any })}
-              >
-                <SelectTrigger id="danaPlus">
-                  <SelectValue placeholder="Existing User?" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Yes">Yes</SelectItem>
-                  <SelectItem value="No">No</SelectItem>
-                </SelectContent>
-              </Select>
+      {/* Investments Section */}
+      <Collapsible 
+        open={investmentsOpen} 
+        onOpenChange={setInvestmentsOpen}
+        className="border rounded-md overflow-hidden"
+      >
+        <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+          <span className="font-medium">Investment Products</span>
+          {investmentsOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+        </CollapsibleTrigger>
+        <CollapsibleContent className="p-3 space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="danaPlus" className="text-base">DANA+</Label>
+              <p className="text-sm text-muted-foreground">High-interest savings</p>
             </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="reksadana">Reksadana</Label>
-              <Select 
-                value={userProfile.reksadana} 
-                onValueChange={(value) => updateUserProfile({ reksadana: value as any })}
-              >
-                <SelectTrigger id="reksadana">
-                  <SelectValue placeholder="Existing User?" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Yes">Yes</SelectItem>
-                  <SelectItem value="No">No</SelectItem>
-                </SelectContent>
-              </Select>
+            <Switch 
+              id="danaPlus" 
+              checked={danaPlus} 
+              onCheckedChange={setDanaPlus} 
+            />
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="reksadana" className="text-base">Reksa Dana</Label>
+              <p className="text-sm text-muted-foreground">Mutual funds</p>
             </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="eMAS">eMAS</Label>
-              <Select 
-                value={userProfile.eMAS} 
-                onValueChange={(value) => updateUserProfile({ eMAS: value as any })}
-              >
-                <SelectTrigger id="eMAS">
-                  <SelectValue placeholder="Existing User?" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Yes">Yes</SelectItem>
-                  <SelectItem value="No">No</SelectItem>
-                </SelectContent>
-              </Select>
+            <Switch 
+              id="reksadana" 
+              checked={reksadana} 
+              onCheckedChange={setReksadana} 
+            />
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="emas" className="text-base">eMAS</Label>
+              <p className="text-sm text-muted-foreground">Gold investment product</p>
             </div>
-          </CardContent>
-        )}
-      </Card>
+            <Switch 
+              id="emas" 
+              checked={eMAS} 
+              onCheckedChange={setEMAS} 
+            />
+          </div>
+          
+          <div className="flex justify-end pt-2">
+            <Button onClick={saveInvestments} size="sm">Save</Button>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
     </div>
   );
 } 

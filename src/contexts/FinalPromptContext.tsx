@@ -52,16 +52,24 @@ export function FinalPromptProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const loadSavedPrompts = async () => {
       try {
-        const response = await fetch('/api/prompts');
+        const response = await fetch('/api/final-prompts');
         if (response.ok) {
           const data = await response.json();
-          setPromptVersions(data.versions || []);
           
-          // Load the most recent prompt if available
-          if (data.versions && data.versions.length > 0) {
-            const mostRecent = data.versions[0]; // Assuming sorted by timestamp desc
-            setFinalPrompt(mostRecent.prompt);
-            setActivePromptId(mostRecent.id);
+          // Convert the API response to our PromptVersion format
+          const formattedVersions = data.prompts.map((p: any) => ({
+            id: p.id,
+            prompt: p.prompt,
+            timestamp: new Date(p.createdAt)
+          }));
+          
+          setPromptVersions(formattedVersions || []);
+          
+          // Load the active prompt or most recent if available
+          if (data.prompts && data.prompts.length > 0) {
+            const activePrompt = data.prompts.find((p: any) => p.isActive) || data.prompts[0];
+            setFinalPrompt(activePrompt.prompt);
+            setActivePromptId(activePrompt.id);
           }
         }
       } catch (error) {
@@ -128,28 +136,38 @@ export function FinalPromptProvider({ children }: { children: ReactNode }) {
   }, [finalPrompt, knowledgeBase]);
 
   const savePromptVersion = async () => {
-    const newVersion: PromptVersion = {
-      id: Date.now().toString(),
-      prompt: finalPrompt,
-      timestamp: new Date()
-    };
-    
     try {
+      console.log('Saving prompt version to database...');
+      
       // Save to server
-      const response = await fetch('/api/prompts', {
+      const response = await fetch('/api/final-prompts', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ version: newVersion }),
+        body: JSON.stringify({ 
+          prompt: finalPrompt,
+          name: `Version ${promptVersions.length + 1}`,
+          isActive: true
+        }),
       });
       
       if (response.ok) {
+        const data = await response.json();
+        console.log('Prompt version saved successfully:', data);
+        
         // Update local state
+        const newVersion = {
+          id: data.prompt.id,
+          prompt: data.prompt.prompt,
+          timestamp: new Date(data.prompt.createdAt)
+        };
+        
         setPromptVersions(prev => [newVersion, ...prev]);
-        setActivePromptId(newVersion.id);
+        setActivePromptId(data.prompt.id);
       } else {
-        console.error('Failed to save prompt version');
+        const errorData = await response.json();
+        console.error('Failed to save prompt version:', errorData);
       }
     } catch (error) {
       console.error('Error saving prompt version:', error);
